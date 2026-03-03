@@ -87,7 +87,50 @@ $dateContent = "# Authoritative Date`n`nToday is **$todayISO** ($todayFull)`n`nT
 Set-Content -Path $dateFile -Value $dateContent -Encoding UTF8
 Write-Log "Date injected: $todayISO"
 
-# ── 3. BOOT CONTEXT COMPILATION ──────────────────────────────
+# ── 3. SLEEP CYCLE (runs before gateway, Markdown + neural only) ─────────────
+# Merges unprocessed daily logs into CORE_MEMORY.md and incrementally
+# updates the neural graph. Only runs if more than 6 hours since last run.
+# Vector reindex happens AFTER the gateway is healthy (Block 2 below).
+$reconcileScript = "$VAULT_PATH\tools\reconcile_memory.py"
+$reconcileState  = "$VAULT_PATH\workspace\memory\_reconcile_state.json"
+$runReconcile    = $false
+
+if (Test-Path $reconcileScript) {
+    if (Test-Path $reconcileState) {
+        try {
+            $state      = Get-Content $reconcileState -Raw | ConvertFrom-Json
+            $lastRun    = [datetime]::Parse($state.last_reconcile_run)
+            $hoursSince = ([datetime]::Now - $lastRun).TotalHours
+            if ($hoursSince -gt 6) { $runReconcile = $true }
+        } catch {
+            $runReconcile = $true
+        }
+    } else {
+        $runReconcile = $true
+    }
+
+    if ($runReconcile) {
+        Write-Log "Sleep cycle: running reconcile_memory.py..."
+        $geminiKey = ""
+        try {
+            $ocCfg     = Get-Content "$OPENCLAW_DIR\openclaw.json" -Raw | ConvertFrom-Json
+            $geminiKey = $ocCfg.env.GEMINI_API_KEY
+        } catch { }
+
+        if ($geminiKey) {
+            $result = & python "$reconcileScript" --vault-path "$VAULT_PATH" --api-key "$geminiKey" 2>&1 | Out-String
+            Write-Log "Sleep cycle complete."
+        } else {
+            Write-Log "Sleep cycle skipped: GEMINI_API_KEY not found in openclaw.json."
+        }
+    } else {
+        Write-Log "Sleep cycle: skipped (ran less than 6 hours ago)."
+    }
+} else {
+    Write-Log "Sleep cycle: reconcile_memory.py not found — skipping."
+}
+
+# ── 4. BOOT CONTEXT COMPILATION ──────────────────────────────
 # Reads your identity files and compiles them into BOOT_CONTEXT.md
 # OpenClaw injects this file automatically on session start.
 # This is how your AI knows who it is before it says a single word.
@@ -110,17 +153,51 @@ try {
     Write-Log "WARNING: BOOT_CONTEXT.md compilation failed (non-fatal): $($_.Exception.Message)"
 }
 
-# ── 4. LAUNCH GATEWAY ────────────────────────────────────────
+# ── 5. LAUNCH GATEWAY ────────────────────────────────────────
 Write-Log "Launching OpenClaw Gateway..."
 $gateway = Start-Gateway
 Write-Log "Gateway LIVE on port 18789."
 
-# ── 5. LAUNCH KOKORO (optional) ──────────────────────────────
+# ── 6. LAUNCH KOKORO (optional) ──────────────────────────────
 $kokoro = Start-Kokoro
 
 Write-Log "SENTINEL ACTIVE — Watchdog loop starting. Checking gateway every 30s."
 
-# ── 6. WATCHDOG LOOP ─────────────────────────────────────────
+# ── 7. VECTOR REINDEX (after gateway confirmed healthy) ──────
+# This fires only if the sleep cycle ran this session.
+# The gateway MUST be live before we trigger a reindex — that's why
+# this block is here and not in reconcile_memory.py.
+if ($runReconcile) {
+    Write-Log "Waiting for gateway to be healthy before vector reindex..."
+    $healthy  = $false
+    $attempts = 0
+    while (-not $healthy -and $attempts -lt 20) {
+        Start-Sleep 3
+        try {
+            $resp = Invoke-WebRequest -Uri "http://localhost:18789/health" -TimeoutSec 5 -ErrorAction Stop
+            if ($resp.StatusCode -eq 200) { $healthy = $true }
+        } catch { }
+        $attempts++
+    }
+
+    if ($healthy) {
+        try {
+            $ocCfg   = Get-Content "$OPENCLAW_DIR\openclaw.json" -Raw | ConvertFrom-Json
+            $token   = $ocCfg.gateway.auth.token
+            $headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
+            $body    = "{`"scope`":`"vault`",`"path`":`"$($VAULT_PATH -replace '\\','\\'))`"}"
+            Invoke-WebRequest -Uri "http://localhost:18789/api/memory/reindex" `
+                -Method POST -Headers $headers -Body $body -TimeoutSec 30 -ErrorAction Stop | Out-Null
+            Write-Log "Vector reindex triggered successfully."
+        } catch {
+            Write-Log "Vector reindex failed (non-fatal): $($_.Exception.Message)"
+        }
+    } else {
+        Write-Log "Gateway not healthy after 60s — vector reindex skipped this cycle."
+    }
+}
+
+# ── 8. WATCHDOG LOOP ─────────────────────────────────────────
 # This is the heartbeat. Every 30 seconds, check if the gateway
 # is still alive. If it died, restart it automatically.
 # Your AI should never be down for more than 30 seconds.
