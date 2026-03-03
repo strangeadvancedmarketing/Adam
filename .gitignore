@@ -1,0 +1,55 @@
+# Adam Framework — .gitignore
+# Prevents secrets and personal data from being committed
+
+# ── NEVER COMMIT THESE ──────────────────────────────────────
+
+# Filled-in config files (keep templates, not live versions)
+openclaw.json
+mcporter.json
+SENTINEL.ps1
+
+# Environment and secrets
+.env
+*.env
+*.key
+*.token
+*.secret
+
+# Personal Vault content (never commit your actual Vault)
+/my-vault/
+/vault/
+**/CORE_MEMORY.md
+**/active-context.md
+**/memory/
+**/BOOT_CONTEXT.md
+**/TODAY.md
+
+# Logs
+*.log
+sentinel.log
+kokoro_*.log
+
+# OpenClaw runtime files
+.openclaw/
+!.openclaw/openclaw.json   # This is intentional — only commit the template, not the live version
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── SAFE TO COMMIT ──────────────────────────────────────────
+# engine/*.template.json
+# engine/*.template.ps1
+# vault-templates/*.template.md
+# vault-templates/BOOT_SEQUENCE.md
+# docs/**
+# README.md

@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.19-2",
+    "lastTouchedAt": "2026-01-01T00:00:00.000Z"
+  },
+
+  "env": {
+    "LLM_API_KEY": "YOUR_LLM_API_KEY",
+    "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY_OR_REMOVE_THIS_LINE",
+    "TELEGRAM_BOT_TOKEN": "YOUR_TELEGRAM_BOT_TOKEN_OR_REMOVE_THIS_LINE",
+    "OPENCLAW_GATEWAY_TOKEN": "YOUR_GENERATED_TOKEN_SEE_SETUP_MD"
+  },
+
+  "models": {
+    "providers": {
+      "nvidia": {
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "apiKey": "YOUR_LLM_API_KEY",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "moonshotai/kimi-k2.5",
+            "name": "Kimi K2.5",
+            "input": ["text"],
+            "contextWindow": 131072
+          },
+          {
+            "id": "meta/llama-3.3-70b-instruct",
+            "name": "Llama 3.3 70B Instruct",
+            "input": ["text"],
+            "contextWindow": 128000
+          }
+        ]
+      }
+    }
+  },
+
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "nvidia/moonshotai/kimi-k2.5"
+      },
+      "models": {
+        "nvidia/moonshotai/kimi-k2.5": {},
+        "nvidia/meta/llama-3.3-70b-instruct": {}
+      },
+      "memorySearch": {
+        "sources": ["memory", "sessions"],
+        "extraPaths": [
+          "C:\\YOUR_VAULT_PATH\\CORE_MEMORY.md",
+          "C:\\YOUR_VAULT_PATH\\workspace\\memory",
+          "C:\\YOUR_VAULT_PATH\\workspace\\BOOT_CONTEXT.md"
+        ],
+        "experimental": {
+          "sessionMemory": true
+        },
+        "provider": "local",
+        "fallback": "none",
+        "sync": {
+          "watch": true,
+          "sessions": {
+            "deltaBytes": 50000,
+            "deltaMessages": 25
+          }
+        },
+        "query": {
+          "hybrid": {
+            "enabled": true,
+            "vectorWeight": 0.7,
+            "textWeight": 0.3,
+            "candidateMultiplier": 4
+          }
+        },
+        "cache": {
+          "enabled": true,
+          "maxEntries": 50000
+        }
+      },
+      "compaction": {
+        "reserveTokensFloor": 24000,
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 4000,
+          "prompt": "Write any lasting notes to C:\\YOUR_VAULT_PATH\\workspace\\memory\\YYYY-MM-DD.md in Markdown format. Update C:\\YOUR_VAULT_PATH\\CORE_MEMORY.md if project state has changed. Reply with NO_REPLY if nothing to store.",
+          "systemPrompt": "You are YOUR_AI_NAME. Session nearing compaction. Store durable memories now."
+        }
+      },
+      "blockStreamingDefault": "off",
+      "blockStreamingBreak": "text_end",
+      "blockStreamingChunk": {
+        "minChars": 1200,
+        "maxChars": 1400
+      },
+      "blockStreamingCoalesce": {
+        "idleMs": 500
+      },
+      "timeoutSeconds": 1800,
+      "typingIntervalSeconds": 6,
+      "typingMode": "instant"
+    }
+  },
+
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": false
+      }
+    }
+  },
+
+  "messages": {
+    "tts": {
+      "auto": "always",
+      "mode": "final",
+      "provider": "edge",
+      "edge": {
+        "enabled": true,
+        "voice": "en-GB-RyanNeural"
+      },
+      "timeoutMs": 120000
+    }
+  },
+
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true
+  },
+
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "open",
+      "botToken": "YOUR_TELEGRAM_BOT_TOKEN",
+      "replyToMode": "first",
+      "allowFrom": ["*"],
+      "groupPolicy": "allowlist",
+      "historyLimit": 50,
+      "dmHistoryLimit": 30,
+      "draftChunk": {
+        "minChars": 1200,
+        "maxChars": 2500,
+        "breakPreference": "paragraph"
+      },
+      "streamMode": "partial"
+    }
+  },
+
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "YOUR_GENERATED_TOKEN_SEE_SETUP_MD"
+    },
+    "reload": {
+      "mode": "hybrid",
+      "debounceMs": 300
+    }
+  },
+
+  "plugins": {
+    "slots": {
+      "memory": "memory-core"
+    },
+    "allow": [
+      "telegram",
+      "memory-core"
+    ],
+    "entries": {
+      "memory-core": {
+        "enabled": true
+      },
+      "telegram": {
+        "enabled": true
+      }
+    }
+  }
+}

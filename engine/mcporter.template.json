@@ -1,0 +1,61 @@
+{
+  "_comment": "Adam Framework - mcporter.template.json",
+  "_instructions": "mcporter routes MCP server connections for OpenClaw. Copy this to your mcporter config location. Replace all YOUR_* placeholders. Remove any server blocks you don't need.",
+  "_mcporter_config_location": "Run 'mcporter config path' to find where this file should live on your system.",
+
+  "servers": {
+
+    "neural-memory": {
+      "_comment": "Local SQLite knowledge graph. Layer 3 of the Adam Framework. Required for full memory functionality.",
+      "command": "python",
+      "args": ["-m", "neural_memory.mcp_server"],
+      "env": {}
+    },
+
+    "firecrawl": {
+      "_comment": "Web scraping and search. Recommended replacement for built-in web search. Get a free key at firecrawl.dev",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp-server"],
+      "env": {
+        "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY"
+      }
+    },
+
+    "gemini": {
+      "_comment": "Google Gemini — text, vision, document analysis. Optional.",
+      "command": "npx",
+      "args": ["-y", "@google/gemini-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "YOUR_GEMINI_API_KEY"
+      }
+    },
+
+    "notion": {
+      "_comment": "Notion workspace integration. Optional.",
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_API_KEY": "YOUR_NOTION_INTEGRATION_TOKEN"
+      }
+    },
+
+    "desktop-commander": {
+      "_comment": "File system and terminal access for the AI. Gives the AI real tools to work with. Install: npm install -g @desktop-commander/mcp",
+      "command": "desktop-commander",
+      "args": ["serve"],
+      "env": {}
+    },
+
+    "openrouter": {
+      "_comment": "Routes tasks to other AI models (DeepSeek, GPT-4o, Claude, Llama, etc). Optional — useful for sub-agent orchestration.",
+      "command": "npx",
+      "args": ["-y", "@stabgan/openrouter-mcp-multimodal"],
+      "env": {
+        "OPENROUTER_API_KEY": "YOUR_OPENROUTER_API_KEY"
+      }
+    }
+  },
+
+  "_adding_more_servers": "Search npm for 'mcp-server' to find community MCP servers for Slack, GitHub, Google Drive, and more. Any MCP-compatible server can be added here.",
+  "_security_note": "Never commit this file with real API keys. Use environment variables or a .env file."
+}
