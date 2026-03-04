@@ -4,6 +4,8 @@
 > "Every time you start a new session, your AI forgets everything.  
 > This framework fixes that."
 
+**[→ Live Demo: See 353 Sessions of Proof](https://strangeadvancedmarketing.github.io/adam/)**
+
 ---
 
 ## What This Is
@@ -161,6 +163,12 @@ This means the framework is model-agnostic. Swap the LLM, keep the Vault — you
 ## License
 
 MIT. Use it, build on it, ship it.
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The biggest gap right now is a Linux/macOS port of SENTINEL — if you build it, open a PR.
 
 ---
 
