@@ -1,0 +1,14 @@
+# Adam Framework — Python Dependencies
+#
+# All tools in this repo (coherence_monitor.py, reconcile_memory.py,
+# legacy_importer.py, test_coherence_monitor.py) use Python standard
+# library only. No third-party packages required.
+#
+# Python 3.10+ required.
+#
+# The one external dependency is the neural-memory MCP server,
+# installed separately via pip:
+#
+#   pip install neural_memory
+#
+# See SETUP_HUMAN.md Phase 2 for full neural memory setup instructions.

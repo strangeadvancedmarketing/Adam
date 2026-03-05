@@ -29,7 +29,7 @@ The Adam Framework was built by one person — running a small business in Miami
 | Model migrations survived | 4 (Anthropic → NVIDIA → Groq → OpenRouter → back) |
 | System rebuilds survived | 2 (including one complete nuclear reset) |
 | Identity preserved through all of it | Yes |
-| Layer 5 coherence monitor test coverage | 27/27 passing against live data |
+| Layer 5 coherence monitor test coverage | 30/30 passing against live data |
 | Problems solved | 2 (AI Amnesia + within-session coherence degradation) |
 
 ---

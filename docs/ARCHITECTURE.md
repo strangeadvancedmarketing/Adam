@@ -127,7 +127,7 @@ The Adam Framework solves both problems at the architecture level with 5 complem
 
 **Files:**
 - `tools/coherence_monitor.py` — the monitor
-- `tools/test_coherence_monitor.py` — 27-test suite, validated against live session data before first production run
+- `tools/test_coherence_monitor.py` — 30-test suite, validated against live session data before first production run
 - `vault-templates/coherence_baseline.template.json` — session baseline schema
 - `vault-templates/coherence_log.template.json` — event log schema (session-scoped, resets daily)
 
