@@ -1,19 +1,23 @@
 """
 coherence_monitor.py — Adam Coherence Monitor (Layer 5)
-Detects within-session coherence degradation by tracking scratchpad usage
-and context depth. Injects a re-anchor when drift is detected.
+Detects within-session coherence degradation via two signals:
+  1. Scratchpad dropout — scratchpad tag absent from recent assistant turns
+  2. Real token depth — actual input token count from OpenClaw session JSONL
 
 HOW IT WORKS:
-  - Reads the OpenClaw session log to detect scratchpad usage per turn block
-  - Tracks context depth via a lightweight token estimate
-  - When scratchpad dropout + depth threshold are both met: drift confirmed
-  - Writes coherence_log.json for the current session
-  - Re-anchor injection: writes a re-anchor trigger file that SENTINEL watches
+  Reads the active OpenClaw session JSONL file (one JSON object per line).
+  Extracts assistant turns, checks scratchpad usage in the last N turns,
+  reads real token counts from the usage field (no char estimation).
+  When drift is confirmed, writes reanchor_pending.json for SENTINEL to consume.
+  Logs every check event to coherence_log.json (session-scoped, reset at boot).
 
-RUNS AS: Standalone script, called by SENTINEL on a turn interval
-  Example (in SENTINEL): every 10 Telegram messages, call this script.
+RUNS AS: Standalone script called by SENTINEL on a time interval.
+  Suggested: every 5-10 minutes while gateway is active.
 
-Exit codes: 0 = coherent, 1 = drift detected (re-anchor triggered), 2 = error
+Exit codes:
+  0 = coherent, no action taken
+  1 = drift detected, reanchor_pending.json written
+  2 = error (session unreadable, paths missing, etc.)
 """
 
 import os
@@ -21,29 +25,26 @@ import re
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 
-# ── PATHS ────────────────────────────────────────────────────────────────────
-VAULT_ROOT          = r"C:\AdamsVault"
-WORKSPACE           = r"C:\AdamsVault\workspace"
-AGENTS_MD           = r"C:\AdamsVault\workspace\AGENTS.md"
-ACTIVE_CONTEXT      = r"C:\AdamsVault\workspace\active-context.md"
-SOUL_MD             = r"C:\AdamsVault\workspace\SOUL.md"
-BASELINE_FILE       = r"C:\AdamsVault\workspace\coherence_baseline.json"
-COHERENCE_LOG       = r"C:\AdamsVault\workspace\coherence_log.json"
-REANCHOR_TRIGGER    = r"C:\AdamsVault\workspace\reanchor_pending.json"
-OPENCLAW_SESSIONS   = r"C:\Users\AJSup\.openclaw\agents"
+# ── PATHS ─────────────────────────────────────────────────────────────────────
+VAULT_ROOT       = r"C:\AdamsVault"
+WORKSPACE        = r"C:\AdamsVault\workspace"
+AGENTS_MD        = r"C:\AdamsVault\workspace\AGENTS.md"
+ACTIVE_CONTEXT   = r"C:\AdamsVault\workspace\active-context.md"
+BASELINE_FILE    = r"C:\AdamsVault\workspace\coherence_baseline.json"
+COHERENCE_LOG    = r"C:\AdamsVault\workspace\coherence_log.json"
+REANCHOR_TRIGGER = r"C:\AdamsVault\workspace\reanchor_pending.json"
+SESSIONS_DIR     = r"C:\Users\AJSup\.openclaw\agents\main\sessions"
+CONTEXT_WINDOW   = 131072   # Kimi K2.5
 
-# ── THRESHOLDS ───────────────────────────────────────────────────────────────
-# Drift is confirmed when BOTH signals are true:
-#   1. No scratchpad usage in the last SCRATCHPAD_WINDOW turns
-#   2. Estimated context depth exceeds CONTEXT_DRIFT_THRESHOLD (as % of window)
-SCRATCHPAD_WINDOW       = 10    # turns to look back for scratchpad absence
-CONTEXT_DRIFT_THRESHOLD = 0.40  # 40% context consumed — drift risk zone begins
-CONTEXT_WARN_THRESHOLD  = 0.65  # 65% — high risk, re-anchor even without dropout
+# ── THRESHOLDS ────────────────────────────────────────────────────────────────
+SCRATCHPAD_WINDOW       = 10    # assistant turns to look back
+CONTEXT_DRIFT_THRESHOLD = 0.40  # 40% — drift risk begins
+CONTEXT_WARN_THRESHOLD  = 0.65  # 65% — high risk, re-anchor regardless
 
-# ── LOGGING ──────────────────────────────────────────────────────────────────
+# ── LOGGING ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] %(levelname)s: %(message)s",
@@ -52,47 +53,41 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-run_start = datetime.now()
-
 def rlog(msg, level="INFO"):
     getattr(log, level.lower(), log.info)(msg)
 
-# ── PART 1: BASELINE ─────────────────────────────────────────────────────────
+# ── PART 1: BASELINE ──────────────────────────────────────────────────────────
 def load_baseline():
-    """Load or create the session coherence baseline."""
     if not os.path.exists(BASELINE_FILE):
         return create_baseline()
     try:
         with open(BASELINE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            b = json.load(f)
+        # Invalidate if from a previous calendar day
+        session_date = b.get("session_date", "")
+        if session_date != str(date.today()):
+            rlog("Baseline is from a previous session — resetting.", "WARNING")
+            return create_baseline()
+        return b
     except Exception as e:
-        rlog(f"Baseline file unreadable, recreating: {e}", "WARNING")
+        rlog(f"Baseline unreadable, resetting: {e}", "WARNING")
         return create_baseline()
 
 def create_baseline():
-    """
-    Write coherence_baseline.json at session start.
-    Called by SENTINEL during boot, before gateway launch.
-    Establishes what 'coherent Adam' looks like for this session.
-    """
     baseline = {
-        "session_start":        datetime.now().isoformat(),
-        "scratchpad_expected":  True,
-        "context_window_tokens": 131072,   # Kimi K2.5 context window
-        "estimated_tokens_used": 0,
-        "reinjections":         0,
-        "last_check_turn":      0,
-        "drift_events":         []
+        "session_date":       str(date.today()),
+        "session_start":      datetime.now().isoformat(),
+        "scratchpad_expected": True,
+        "context_window":     CONTEXT_WINDOW,
+        "reinjections":       0,
+        "last_check_turn":    0,
+        "drift_events":       []
     }
-    try:
-        with open(BASELINE_FILE, "w", encoding="utf-8") as f:
-            json.dump(baseline, f, indent=2)
-        rlog("Coherence baseline created.")
-    except Exception as e:
-        rlog(f"Failed to write baseline: {e}", "ERROR")
+    _save_baseline(baseline)
+    rlog("Coherence baseline created for today.")
     return baseline
 
-def save_baseline(baseline):
+def _save_baseline(baseline):
     try:
         with open(BASELINE_FILE, "w", encoding="utf-8") as f:
             json.dump(baseline, f, indent=2)
@@ -100,82 +95,101 @@ def save_baseline(baseline):
         rlog(f"Failed to save baseline: {e}", "WARNING")
 
 
-# ── PART 2: SESSION LOG READER ────────────────────────────────────────────────
+# ── PART 2: SESSION FILE FINDER ───────────────────────────────────────────────
 def find_active_session():
     """
-    Locate the most recently modified session file in OpenClaw's agents directory.
-    OpenClaw writes live session JSON as messages accumulate.
+    Find the most recently modified .jsonl session file.
+    Excludes: .lock files, .deleted. files, .reset. files, sessions.json index.
+    Targets the live UUID session file only.
     """
     try:
-        session_dir = Path(OPENCLAW_SESSIONS)
-        sessions = list(session_dir.glob("sessions*.json"))
-        if not sessions:
-            # Try flat sessions.json
-            flat = session_dir / "sessions.json"
-            if flat.exists():
-                return str(flat)
-            rlog("No session files found in OpenClaw agents directory.", "WARNING")
+        sessions_path = Path(SESSIONS_DIR)
+        candidates = [
+            f for f in sessions_path.iterdir()
+            if f.suffix == ".jsonl"
+            and ".deleted." not in f.name
+            and ".reset." not in f.name
+            and not f.name.endswith(".lock")
+        ]
+        if not candidates:
+            rlog("No active session JSONL files found.", "WARNING")
             return None
-        # Most recently modified
-        latest = max(sessions, key=os.path.getmtime)
+        latest = max(candidates, key=lambda f: f.stat().st_mtime)
+        rlog(f"Active session: {latest.name}")
         return str(latest)
     except Exception as e:
-        rlog(f"Could not locate session file: {e}", "WARNING")
+        rlog(f"Session file discovery failed: {e}", "ERROR")
         return None
 
-def count_turns_and_scratchpad(session_path, window=SCRATCHPAD_WINDOW):
+# ── PART 3: JSONL SESSION READER ──────────────────────────────────────────────
+SCRATCHPAD_RE = re.compile(r"<scratchpad>", re.IGNORECASE)
+
+def read_session(session_path):
     """
-    Read the OpenClaw session JSON and return:
-      - total_turns: number of assistant turns in session
-      - scratchpad_in_window: True if ANY scratchpad tag found in last N turns
-      - estimated_tokens: rough token count (chars / 4)
+    Parse OpenClaw JSONL session file (one JSON object per line).
+    Returns:
+      assistant_turns  — list of assistant message objects (with usage field)
+      last_input_tokens — input token count from the most recent assistant turn
     """
+    assistant_turns = []
+    last_input_tokens = 0
+
     try:
         with open(session_path, "r", encoding="utf-8", errors="replace") as f:
-            data = json.load(f)
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # Skip malformed lines silently
 
-        # OpenClaw session format: list of message objects with role/content
-        messages = data if isinstance(data, list) else data.get("messages", [])
+                if obj.get("type") != "message":
+                    continue
+                msg = obj.get("message", {})
+                if msg.get("role") != "assistant":
+                    continue
 
-        assistant_turns = [
-            m for m in messages
-            if isinstance(m, dict) and m.get("role") == "assistant"
-        ]
-
-        total_turns = len(assistant_turns)
-        recent_turns = assistant_turns[-window:] if total_turns >= window else assistant_turns
-
-        # Scratchpad detection — check for opening tag
-        scratchpad_pattern = re.compile(r"<scratchpad>", re.IGNORECASE)
-        scratchpad_in_window = any(
-            scratchpad_pattern.search(str(t.get("content", "")))
-            for t in recent_turns
-        )
-
-        # Rough token estimate: total chars in all messages / 4
-        total_chars = sum(len(str(m.get("content", ""))) for m in messages)
-        estimated_tokens = total_chars // 4
-
-        return total_turns, scratchpad_in_window, estimated_tokens
+                assistant_turns.append(msg)
+                usage = msg.get("usage", {})
+                if usage.get("input", 0) > 0:
+                    last_input_tokens = usage["input"]
 
     except Exception as e:
-        rlog(f"Session read failed: {e}", "WARNING")
-        return 0, True, 0   # Default: assume coherent if unreadable
+        rlog(f"Session read error: {e}", "ERROR")
+        return [], 0
+
+    return assistant_turns, last_input_tokens
+
+def check_scratchpad(assistant_turns, window=SCRATCHPAD_WINDOW):
+    """
+    Check whether scratchpad tag fired in the last N assistant turns.
+    Searches content array for thinking blocks and text blocks.
+    Returns True if found (coherent), False if absent (potential drift).
+    """
+    recent = assistant_turns[-window:] if len(assistant_turns) >= window else assistant_turns
+    for turn in recent:
+        content = turn.get("content", [])
+        if isinstance(content, list):
+            for block in content:
+                block_str = json.dumps(block)
+                if SCRATCHPAD_RE.search(block_str):
+                    return True
+        elif isinstance(content, str):
+            if SCRATCHPAD_RE.search(content):
+                return True
+    return False
 
 
-# ── PART 3: DRIFT SCORING ─────────────────────────────────────────────────────
+# ── PART 4: DRIFT SCORING ─────────────────────────────────────────────────────
 def score_drift(scratchpad_present, context_pct):
     """
-    Compute a drift score 0.0–1.0.
-      0.0 = fully coherent
-      1.0 = maximum detected drift
-
-    Scoring logic:
-      - Scratchpad present + low context   = 0.0  (coherent)
-      - Scratchpad absent + low context    = 0.3  (early warning)
-      - Scratchpad present + high context  = 0.4  (pressure building)
-      - Scratchpad absent + mid context    = 0.6  (drift likely)
-      - Scratchpad absent + high context   = 0.9  (drift confirmed)
+    0.0 = fully coherent
+    0.3 = early warning (scratchpad absent, low context)
+    0.4 = pressure building (scratchpad present, high context)
+    0.6 = drift likely (scratchpad absent, mid context)
+    0.9 = drift confirmed (scratchpad absent, high context)
     """
     if scratchpad_present and context_pct < CONTEXT_DRIFT_THRESHOLD:
         return 0.0
@@ -185,35 +199,36 @@ def score_drift(scratchpad_present, context_pct):
         return 0.3
     if not scratchpad_present and context_pct < CONTEXT_WARN_THRESHOLD:
         return 0.6
-    if not scratchpad_present and context_pct >= CONTEXT_WARN_THRESHOLD:
-        return 0.9
-    return 0.0
+    # scratchpad absent + high context
+    return 0.9
 
 def should_reanchor(drift_score, context_pct):
-    """
-    Trigger re-anchor when:
-      - Drift score >= 0.6 (scratchpad absent + meaningful context depth)
-      - OR context alone is at critical threshold (>= 65%) regardless of scratchpad
-    """
     return drift_score >= 0.6 or context_pct >= CONTEXT_WARN_THRESHOLD
 
-# ── PART 4: COHERENCE LOG ────────────────────────────────────────────────────
+# ── PART 5: COHERENCE LOG (SESSION-SCOPED) ────────────────────────────────────
 def load_coherence_log():
+    """Load log for today only — discard if stale."""
     if not os.path.exists(COHERENCE_LOG):
-        return {"session_start": datetime.now().isoformat(), "events": []}
+        return _fresh_log()
     try:
         with open(COHERENCE_LOG, "r", encoding="utf-8") as f:
-            return json.load(f)
+            clog = json.load(f)
+        if clog.get("session_date") != str(date.today()):
+            return _fresh_log()
+        return clog
     except Exception:
-        return {"session_start": datetime.now().isoformat(), "events": []}
+        return _fresh_log()
 
-def append_coherence_event(turn, context_pct, scratchpad_fired, drift_score, action):
+def _fresh_log():
+    return {"session_date": str(date.today()), "events": []}
+
+def append_coherence_event(turn, context_pct, scratchpad_present, drift_score, action):
     clog = load_coherence_log()
     clog["events"].append({
         "timestamp":        datetime.now().isoformat(),
         "turn":             turn,
-        "context_pct":      round(context_pct, 3),
-        "scratchpad_fired": scratchpad_fired,
+        "context_pct":      round(context_pct, 4),
+        "scratchpad_fired": scratchpad_present,
         "drift_score":      round(drift_score, 2),
         "action":           action
     })
@@ -224,69 +239,71 @@ def append_coherence_event(turn, context_pct, scratchpad_fired, drift_score, act
         rlog(f"Failed to write coherence log: {e}", "WARNING")
 
 
-# ── PART 5: RE-ANCHOR CONTENT BUILDER ────────────────────────────────────────
+# ── PART 6: RE-ANCHOR CONTENT BUILDER ────────────────────────────────────────
 def build_reanchor_content():
     """
-    Build the re-anchor payload from live Vault files.
-    Pulls the ReAct loop definition from AGENTS.md and current
-    top priorities from active-context.md.
-    Target: ~200 tokens. Surgical, not a full context reload.
+    Pull identity-critical content from live Vault files.
+    Target: ~200 tokens. Surgical re-anchor, not a full context reload.
+    Falls back to a minimal hardcoded string if files are unreadable.
     """
     sections = []
 
-    # Pull ReAct loop header from AGENTS.md
+    # Extract ReAct loop header from AGENTS.md
     try:
         with open(AGENTS_MD, "r", encoding="utf-8", errors="replace") as f:
-            agents_content = f.read()
-        # Extract just the COGNITION ENGINE section header + first instruction
-        react_match = re.search(
-            r"(## .{0,20}COGNITION ENGINE.*?<scratchpad>)",
-            agents_content,
-            re.DOTALL
+            agents_text = f.read()
+        match = re.search(
+            r"(CRITICAL COGNITIVE FRAMEWORK.*?<scratchpad>)",
+            agents_text, re.DOTALL
         )
-        if react_match:
-            sections.append(react_match.group(1)[:600])  # cap at 600 chars
+        if match:
+            sections.append(match.group(1)[:500].strip())
     except Exception as e:
-        rlog(f"Could not read AGENTS.md for re-anchor: {e}", "WARNING")
+        rlog(f"AGENTS.md read failed for re-anchor: {e}", "WARNING")
 
-    # Pull Priority 1 from active-context.md
+    # Extract Priority 1 block from active-context.md
     try:
         with open(ACTIVE_CONTEXT, "r", encoding="utf-8", errors="replace") as f:
-            ctx_content = f.read()
-        prio_match = re.search(r"(## 🔥 Priority 1:.*?)(?=## 🔥 Priority 2:|---|\Z)", ctx_content, re.DOTALL)
-        if prio_match:
-            sections.append(prio_match.group(1).strip()[:400])  # cap at 400 chars
+            ctx_text = f.read()
+        match = re.search(
+            r"(## 🔥 Priority 1:.*?)(?=## 🔥 Priority 2:|^---|$)",
+            ctx_text, re.DOTALL | re.MULTILINE
+        )
+        if match:
+            sections.append(match.group(1).strip()[:350])
     except Exception as e:
-        rlog(f"Could not read active-context.md for re-anchor: {e}", "WARNING")
+        rlog(f"active-context.md read failed for re-anchor: {e}", "WARNING")
 
     if not sections:
-        # Fallback: bare minimum re-anchor
-        return "COHERENCE RE-ANCHOR: Use your scratchpad ReAct loop before responding. Check active-context.md priorities."
+        return (
+            "COHERENCE RE-ANCHOR: Scratchpad dropout detected. "
+            "Use your ReAct loop (<scratchpad>) before responding. "
+            "Check active-context.md for current priorities."
+        )
 
-    reanchor = (
-        "⚠️ COHERENCE RE-ANCHOR — Context depth detected in drift zone.\n"
-        "Your scratchpad ReAct loop has not fired recently. Re-engage now.\n\n"
-        + "\n\n".join(sections)
+    return (
+        "⚠️ COHERENCE RE-ANCHOR — Scratchpad dropout detected.\n"
+        "Re-engage your ReAct cognitive loop now.\n\n"
+        + "\n\n---\n\n".join(sections)
     )
-    return reanchor
 
 def write_reanchor_trigger(content, turn, drift_score):
     """
-    Write reanchor_pending.json — SENTINEL watches this file.
-    When present, SENTINEL injects the re-anchor into the next
-    message context before it reaches the model.
+    Write reanchor_pending.json.
+    SENTINEL polls for this file. When found with consumed=false,
+    SENTINEL injects content into the next message context, then sets consumed=true.
     """
     payload = {
-        "created_at":   datetime.now().isoformat(),
-        "turn":         turn,
-        "drift_score":  drift_score,
-        "content":      content,
-        "consumed":     False
+        "created_at":  datetime.now().isoformat(),
+        "turn":        turn,
+        "drift_score": round(drift_score, 2),
+        "content":     content,
+        "consumed":    False
     }
     try:
         with open(REANCHOR_TRIGGER, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
-        rlog(f"Re-anchor trigger written. Turn: {turn}, Drift score: {drift_score}")
+        rlog(f"reanchor_pending.json written. Turn: {turn}, Score: {drift_score}")
     except Exception as e:
         rlog(f"Failed to write re-anchor trigger: {e}", "ERROR")
 
@@ -294,68 +311,64 @@ def write_reanchor_trigger(content, turn, drift_score):
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
     rlog("=" * 60)
-    rlog("Adam Coherence Monitor — coherence_monitor.py starting")
+    rlog("Adam Coherence Monitor starting")
     rlog("=" * 60)
 
-    # Part 1: Load baseline
     baseline = load_baseline()
 
-    # Part 2: Find and read active session
     session_path = find_active_session()
     if not session_path:
-        rlog("No active session found — nothing to monitor.")
+        rlog("No active session — exiting clean.")
         sys.exit(0)
 
-    rlog(f"Session file: {session_path}")
-    total_turns, scratchpad_present, estimated_tokens = count_turns_and_scratchpad(session_path)
+    assistant_turns, last_input_tokens = read_session(session_path)
+    total_turns = len(assistant_turns)
+    rlog(f"Assistant turns found: {total_turns}")
+    rlog(f"Last input token count: {last_input_tokens}")
 
-    # Part 3: Compute context depth
-    context_window = baseline.get("context_window_tokens", 131072)
-    context_pct = min(estimated_tokens / context_window, 1.0)
+    if total_turns == 0:
+        rlog("No assistant turns yet — session too new to evaluate.")
+        sys.exit(0)
 
-    rlog(f"Turn count: {total_turns}")
+    # Real context depth from token usage (not char estimation)
+    context_pct = min(last_input_tokens / CONTEXT_WINDOW, 1.0)
+    rlog(f"Context depth: {last_input_tokens}/{CONTEXT_WINDOW} = {context_pct*100:.1f}%")
+
+    scratchpad_present = check_scratchpad(assistant_turns)
     rlog(f"Scratchpad in last {SCRATCHPAD_WINDOW} turns: {scratchpad_present}")
-    rlog(f"Estimated tokens: {estimated_tokens} / {context_window} ({context_pct*100:.1f}%)")
 
-    # Part 4: Score drift
     drift_score = score_drift(scratchpad_present, context_pct)
     rlog(f"Drift score: {drift_score}")
 
-    # Part 5: Decide action
     if not should_reanchor(drift_score, context_pct):
-        action = "coherent"
         rlog("Session coherent — no action needed.")
-        append_coherence_event(total_turns, context_pct, scratchpad_present, drift_score, action)
-
-        # Update baseline
+        append_coherence_event(
+            total_turns, context_pct, scratchpad_present, drift_score, "coherent"
+        )
         baseline["last_check_turn"] = total_turns
-        baseline["estimated_tokens_used"] = estimated_tokens
-        save_baseline(baseline)
-
+        _save_baseline(baseline)
         sys.exit(0)
 
-    # Drift confirmed — build and write re-anchor
-    rlog("DRIFT DETECTED — building re-anchor.", "WARNING")
+    # Drift confirmed
+    rlog("DRIFT DETECTED — writing re-anchor trigger.", "WARNING")
     reanchor_content = build_reanchor_content()
     write_reanchor_trigger(reanchor_content, total_turns, drift_score)
+    append_coherence_event(
+        total_turns, context_pct, scratchpad_present, drift_score, "reanchor_triggered"
+    )
 
-    action = "reanchor_triggered"
-    append_coherence_event(total_turns, context_pct, scratchpad_present, drift_score, action)
-
-    # Update baseline counters
     baseline["last_check_turn"] = total_turns
-    baseline["estimated_tokens_used"] = estimated_tokens
     baseline["reinjections"] = baseline.get("reinjections", 0) + 1
     baseline["drift_events"] = baseline.get("drift_events", []) + [{
-        "turn": total_turns,
-        "context_pct": round(context_pct, 3),
+        "turn":        total_turns,
+        "context_pct": round(context_pct, 4),
         "drift_score": drift_score,
-        "timestamp": datetime.now().isoformat()
+        "timestamp":   datetime.now().isoformat()
     }]
-    save_baseline(baseline)
+    _save_baseline(baseline)
 
-    rlog(f"Re-anchor triggered. Total re-injections this session: {baseline['reinjections']}")
-    sys.exit(1)   # Exit 1 = drift detected, SENTINEL can act on this
+    rlog(f"Re-anchor complete. Session reinjections: {baseline['reinjections']}")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
