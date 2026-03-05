@@ -146,7 +146,11 @@ Validated in production, not a lab:
 | Time from zero terminal knowledge to production app | 18 days |
 | Time to solve AI amnesia | 30 days |
 
-Full story: [docs/PROOF.md](docs/PROOF.md) · Interactive visualization: [showcase/ai-amnesia-solved.html](showcase/ai-amnesia-solved.html)
+> **Neural graph numbers are live — updated every night by the sleep cycle.**
+> Each reconcile run snapshots current neuron/synapse counts to `workspace/neural_metrics.json`.
+> This isn't a frozen demo. The graph grows while the system runs.
+
+Full story: [docs/PROOF.md](docs/PROOF.md) · How it was built: [docs/LINEAGE.md](docs/LINEAGE.md) · Interactive visualization: [showcase/ai-amnesia-solved.html](showcase/ai-amnesia-solved.html)
 
 ---
 

@@ -324,18 +324,73 @@ def ingest_neural(old_content: str, new_content: str) -> int:
 
 # ── COMPLETION LOG ────────────────────────────────────────────────────────────
 
+def snapshot_neural_metrics(vault_path: Path, neurons: int, synapses: int):
+    """
+    Append a timestamped neural metrics snapshot to neural_metrics.json.
+    Creates the file if it doesn't exist. Called after every successful reconcile run.
+    This is the data source for the README 'last measured' badge and growth log.
+    """
+    metrics_file = vault_path / "workspace" / "neural_metrics.json"
+    try:
+        if metrics_file.exists():
+            with open(metrics_file, "r", encoding="utf-8") as f:
+                metrics = json.load(f)
+        else:
+            metrics = {"snapshots": []}
+
+        metrics["snapshots"].append({
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "neurons":   neurons,
+            "synapses":  synapses
+        })
+
+        # Keep last 365 snapshots (1 year of daily runs)
+        metrics["snapshots"] = metrics["snapshots"][-365:]
+        metrics["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        metrics["latest"] = {"neurons": neurons, "synapses": synapses}
+
+        with open(metrics_file, "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=2)
+
+        rlog(f"Neural metrics snapshot written: {neurons} neurons / {synapses} synapses")
+        return True
+    except Exception as e:
+        rlog(f"Neural metrics snapshot failed (non-fatal): {e}", "WARNING")
+        return False
+
+
+def get_neural_stats() -> tuple[int, int]:
+    """
+    Query the neural graph for current neuron and synapse counts.
+    Returns (neurons, synapses) or (0, 0) if unavailable.
+    """
+    try:
+        from neural_memory import NeuralMemory
+        nm = NeuralMemory(brain_id="default")
+        stats = nm.stats()
+        neurons  = stats.get("neurons",  stats.get("node_count",  0))
+        synapses = stats.get("synapses", stats.get("edge_count",  0))
+        return int(neurons), int(synapses)
+    except Exception as e:
+        rlog(f"Could not query neural stats (non-fatal): {e}", "WARNING")
+        return 0, 0
+
+
 def write_reconcile_log(reconcile_log: Path, processed: list, total: int,
                         deferred: int, old_lines: int, new_lines: int,
-                        neural_count: int, neural_skipped: str, status: str):
+                        neural_count: int, neural_skipped: str, status: str,
+                        neurons: int = 0, synapses: int = 0):
     elapsed    = (datetime.now() - run_start).total_seconds()
     timestamp  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     neural_str = f"SKIPPED ({neural_skipped})" if neural_skipped else f"{neural_count} new facts"
+    neural_size = f"{neurons:,} neurons / {synapses:,} synapses" if neurons else "unavailable"
     entry = (
         f"\n## Reconcile Run — {timestamp}\n"
         f"- Logs processed: {processed} ({len(processed)} of {total} — {deferred} deferred)\n"
         f"- Core memory: {old_lines} → {new_lines} lines\n"
         f"- Vector reindex: DEFERRED TO SENTINEL (fires after gateway health check)\n"
         f"- Neural ingest: {neural_str}\n"
+        f"- Neural graph size: {neural_size}\n"
         f"- Duration: {elapsed:.1f}s\n"
         f"- Status: {status}\n"
     )
@@ -464,7 +519,6 @@ def main():
         write_reconcile_log(paths["reconcile_log"], to_process, total, deferred,
                             old_lines, old_lines, 0, "LLM validation failed", "FAILED")
         sys.exit(2)
-
     # Part 4: Write updated core memory
     try:
         with open(paths["core_memory"], "w", encoding="utf-8") as f:
@@ -487,6 +541,11 @@ def main():
         neural_skip_reason = str(e)
         rlog(f"Neural ingest skipped: {e}", "WARNING")
 
+    # Part 7: Neural metrics snapshot — query live counts and persist
+    neurons, synapses = get_neural_stats()
+    if neurons > 0:
+        snapshot_neural_metrics(paths["vault_root"], neurons, synapses)
+
     # Update state
     state["processed_logs"]    = list(set(state.get("processed_logs", [])) | set(to_process))
     state["last_reconcile_run"] = datetime.now().strftime("%Y-%m-%d")
@@ -495,7 +554,8 @@ def main():
     # Part 7: Log completion
     status = "SUCCESS" if not neural_skip_reason else "PARTIAL"
     write_reconcile_log(paths["reconcile_log"], to_process, total, deferred,
-                        old_lines, new_lines, neural_count, neural_skip_reason, status)
+                        old_lines, new_lines, neural_count, neural_skip_reason, status,
+                        neurons, synapses)
 
     rlog(f"Sleep cycle complete. Status: {status}")
     sys.exit(0)
