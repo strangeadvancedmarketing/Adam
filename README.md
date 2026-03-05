@@ -4,7 +4,7 @@
 > "Every time you start a new session, your AI forgets everything.  
 > This framework fixes that."
 
-**[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The full story](docs/LINEAGE.md)**
+**[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The full story](docs/LINEAGE.md)** · **[→ Community showcase](SHOWCASE.md)**
 
 ---
 
@@ -74,6 +74,7 @@ All four layers run simultaneously. The memory is in the files. The model is jus
 adam-framework/
 ├── README.md
 ├── CONTRIBUTING.md            ← How to contribute (Linux port, new providers, etc.)
+├── SHOWCASE.md                ← Community deployments — add yours
 ├── SETUP_HUMAN.md             ← Human guide: you have OpenClaw, now give it a soul
 ├── SETUP_AI.md                ← Agent guide: have your existing AI set this up for you
 ├── engine/
