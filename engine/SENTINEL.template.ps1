@@ -1,14 +1,16 @@
 ###############################################################
 #  SENTINEL.template.ps1 - Adam Framework Watchdog
-#  Version: 1.0.0
+#  Version: 1.0.9
 #
 #  WHAT THIS DOES:
 #    1. Kills stale processes from previous sessions
 #    2. Writes the authoritative date to your Vault (TODAY.md)
-#    3. Compiles BOOT_CONTEXT.md — deterministic identity injection
-#    4. Launches OpenClaw Gateway
-#    5. Optionally launches Kokoro TTS (local voice fallback)
-#    6. WATCHDOG LOOP — monitors gateway, auto-restarts if it dies
+#    3. Runs sleep cycle reconciliation if >6 hours since last run
+#    4. Compiles BOOT_CONTEXT.md — deterministic identity injection
+#    5. Launches OpenClaw Gateway
+#    6. Vector reindex after health check (if reconcile ran)
+#    7. WATCHDOG LOOP — monitors gateway, auto-restarts if it dies
+#                     — runs Layer 5 coherence check every 5 minutes
 #
 #  SETUP:
 #    1. Replace all YOUR_* variables below with your actual paths
