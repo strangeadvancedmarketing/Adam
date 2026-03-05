@@ -83,6 +83,43 @@ significantly more accessible to the Obsidian community (large, technical, align
 
 ---
 
+## Voice Layer Upgrade — NVIDIA PersonaPlex 💡
+
+Worth tracking closely. Not ready to integrate yet, but the trajectory is clear.
+
+**What it is:** PersonaPlex is a full-duplex speech-to-speech model from NVIDIA — it
+listens and speaks simultaneously, handles interruptions naturally, and accepts persona
+control via a text prompt. That text prompt maps directly to SOUL.md. Released January
+2026, MIT code license, NVIDIA Open Model license for weights.
+
+**Why it's relevant:** The current voice layer (Kokoro TTS) is one-way — text in,
+speech out. PersonaPlex would replace that with a real-time conversational voice
+interface where Adam listens while speaking, handles barge-ins, and maintains persona
+throughout. The persona-via-text-prompt architecture is a direct fit for how SOUL.md
+already works.
+
+**Current state:**
+- Full model (7B): ~14-16GB VRAM — too heavy to run alongside Kimi K2.5 on most setups
+- Community Q4_K GGUF quantization exists at `Codes4Fun/personaplex-7b-v1-q4_k-GGUF`
+  on HuggingFace — cuts VRAM requirement roughly in half (~6-7GB)
+- Official `--cpu-offload` flag exists for GPU-constrained setups
+- Open feature request in OpenClaw repo (#15392) for native PersonaPlex integration
+- Key limitation: PersonaPlex handles voice only, not tool use — still requires a
+  separate LLM (Kimi K2.5 or similar) for the intelligence layer
+
+**Integration path when ready:**
+PersonaPlex runs its own server at `localhost:8998`. The architecture would be:
+Telegram/mic input → PersonaPlex (voice layer, persona from SOUL.md) → Kimi K2.5
+(tool use, memory, reasoning) → PersonaPlex (spoken response). SENTINEL would manage
+both processes.
+
+**Watch for:** Official OpenClaw PersonaPlex integration, further community
+quantizations, and NVIDIA's promised production-focused architecture optimized for
+lower VRAM usage. When a Q4_K or smaller runs cleanly alongside the main model,
+this becomes a straightforward SENTINEL addition.
+
+---
+
 ## Longer Term 💡
 
 Not scoped yet. Ideas worth tracking.
