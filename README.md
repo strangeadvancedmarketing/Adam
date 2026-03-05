@@ -179,6 +179,12 @@ Every failure mode encountered in production is documented there with: exact sym
 
 ---
 
+## Roadmap
+
+See **[ROADMAP.md](ROADMAP.md)** for what's shipped, what's in progress, and the open community opportunities (Linux/macOS port, additional model providers, Obsidian plugin).
+
+---
+
 ## License
 
 MIT. Use it, build on it, ship it.

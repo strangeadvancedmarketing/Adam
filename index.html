@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adam Framework — AI Amnesia, Solved.</title>
+<meta name="description" content="4-layer persistent memory architecture for local AI assistants. 353 sessions. 8 months. One non-coder. The AI doesn't forget anymore.">
+<meta property="og:title" content="Adam Framework — AI Amnesia, Solved.">
+<meta property="og:description" content="Every time you start a new session, your AI forgets everything. This framework fixes that. 353 sessions of production proof.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://strangeadvancedmarketing.github.io/Adam/">
+<meta property="og:image" content="https://strangeadvancedmarketing.github.io/Adam/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Adam Framework — AI Amnesia, Solved.">
+<meta name="twitter:description" content="Every time you start a new session, your AI forgets everything. This framework fixes that.">
+<meta name="twitter:image" content="https://strangeadvancedmarketing.github.io/Adam/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#070709;--ink:#0d0d12;--surface:#111116;--surface2:#16161e;
+  --border:#1c1c24;--border2:#2a2a36;--gold:#d4a842;--gold-dim:#6b5018;
+  --gold-glow:rgba(212,168,66,0.07);--gold-glow2:rgba(212,168,66,0.13);
+  --green:#3a9460;--red:#c43c3c;--bone:#ede8df;--pale:#b8b2a8;
+  --mute:#5c5a56;--bright:#f5f0e8;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--pale);font-family:'Instrument Sans',sans-serif;font-weight:300;overflow-x:hidden;line-height:1.7;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.5;}
+.wrap{max-width:1020px;margin:0 auto;padding:0 32px;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid var(--border);background:rgba(7,7,9,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.nav-inner{max-width:1020px;margin:0 auto;padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:0.1em;text-decoration:none;}
+.nav-links{display:flex;gap:28px;}
+.nav-links a{font-size:12px;font-weight:400;letter-spacing:0.08em;color:var(--mute);text-decoration:none;text-transform:uppercase;transition:color 0.2s;}
+.nav-links a:hover{color:var(--pale);}
+.nav-cta{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--gold)!important;border:1px solid var(--gold-dim)!important;padding:6px 14px;transition:border-color 0.2s,color 0.2s,background 0.2s!important;}
+.nav-cta:hover{background:var(--gold-glow)!important;border-color:var(--gold)!important;}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 32px 96px;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 70% 40%,rgba(212,168,66,0.06) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 20% 80%,rgba(212,168,66,0.03) 0%,transparent 60%);}
+.hero-grid{position:absolute;inset:0;overflow:hidden;background-image:linear-gradient(rgba(212,168,66,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(212,168,66,0.04) 1px,transparent 1px);background-size:80px 80px;mask-image:linear-gradient(to bottom,transparent 0%,black 30%,black 70%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 30%,black 70%,transparent 100%);}
+.hero-content{position:relative;max-width:1020px;margin:0 auto;width:100%;}
+.hero-tag{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.2em;color:var(--gold);text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:10px;}
+.hero-tag::before{content:'';display:block;width:32px;height:1px;background:var(--gold);}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(52px,8vw,108px);font-weight:900;line-height:0.92;color:var(--bright);margin-bottom:12px;letter-spacing:-0.02em;}
+.hero-title em{font-style:italic;color:var(--gold);}
+.hero-subtitle{font-size:clamp(16px,2vw,22px);font-weight:300;color:var(--pale);max-width:560px;margin-bottom:48px;line-height:1.5;}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;}
+.btn-primary{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--black);background:var(--gold);border:none;padding:14px 28px;text-decoration:none;transition:opacity 0.2s,transform 0.15s;display:inline-block;}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-secondary{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.08em;color:var(--pale);background:transparent;border:1px solid var(--border2);padding:14px 28px;text-decoration:none;transition:border-color 0.2s,color 0.2s;display:inline-block;}
+.btn-secondary:hover{border-color:var(--pale);color:var(--bright);}
+.hero-stats{position:absolute;right:0;bottom:0;display:flex;gap:40px;}
+.hero-stat{text-align:right;}
+.hero-stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--bright);line-height:1;}
+.hero-stat-label{font-size:11px;letter-spacing:0.12em;color:var(--mute);text-transform:uppercase;margin-top:4px;}
+.ticker{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface);overflow:hidden;padding:12px 0;}
+.ticker-inner{display:flex;gap:0;animation:ticker 30s linear infinite;white-space:nowrap;}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.ticker-item{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;color:var(--mute);text-transform:uppercase;padding:0 32px;white-space:nowrap;}
+.ticker-item span{color:var(--gold);margin-right:6px;}
+section{padding:96px 0;}
+.section-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.25em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:16px;}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:700;color:var(--bright);line-height:1.1;margin-bottom:20px;}
+.section-body{font-size:17px;font-weight:300;color:var(--pale);max-width:600px;line-height:1.75;}
+.problem{background:var(--ink);border-top:1px solid var(--border);}
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+.problem-visual{background:var(--surface);border:1px solid var(--border);padding:32px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);line-height:1.8;position:relative;overflow:hidden;}
+.problem-visual::before{content:'SESSION LOG';position:absolute;top:12px;right:16px;font-size:9px;letter-spacing:0.2em;color:var(--border2);}
+.log-line{display:block;margin-bottom:4px;}
+.log-time{color:var(--border2);}
+.log-err{color:var(--red);}
+.log-ok{color:var(--green);}
+.log-gold{color:var(--gold);}
+.arch-layers{margin-top:48px;display:flex;flex-direction:column;gap:0;}
+.arch-layer{display:grid;grid-template-columns:48px 1fr;gap:24px;align-items:start;padding:28px 0;border-bottom:1px solid var(--border);opacity:0;transform:translateX(-16px);transition:opacity 0.5s,transform 0.5s;}
+.arch-layer.visible{opacity:1;transform:translateX(0);}
+.arch-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--border2);line-height:1;padding-top:4px;}
+.arch-name{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+.arch-desc{font-size:15px;color:var(--pale);line-height:1.6;}
+.proof{background:var(--ink);border-top:1px solid var(--border);}
+.proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;}
+.proof-cell{background:var(--surface);padding:36px 28px;}
+.proof-num{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:var(--bright);line-height:1;margin-bottom:8px;}
+.proof-num em{color:var(--gold);font-style:normal;}
+.proof-label{font-size:13px;font-weight:400;color:var(--mute);line-height:1.4;}
+.proof-insight{margin-top:48px;padding:32px;border:1px solid var(--gold-dim);background:var(--gold-glow);}
+.proof-insight p{font-family:'Playfair Display',serif;font-size:22px;font-style:italic;color:var(--bone);line-height:1.5;}
+.proof-insight cite{display:block;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;font-style:normal;color:var(--gold-dim);letter-spacing:0.1em;}
+.lineage-timeline{margin-top:48px;position:relative;}
+.lineage-timeline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--border);}
+.timeline-item{padding:0 0 40px 36px;position:relative;opacity:0;transform:translateY(12px);transition:opacity 0.4s,transform 0.4s;}
+.timeline-item.visible{opacity:1;transform:translateY(0);}
+.timeline-item::before{content:'';position:absolute;left:-3px;top:6px;width:7px;height:7px;border-radius:50%;background:var(--gold-dim);}
+.timeline-item.highlight::before{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+.timeline-date{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:6px;}
+.timeline-event{font-size:16px;font-weight:500;color:var(--bright);margin-bottom:6px;}
+.timeline-desc{font-size:14px;color:var(--mute);line-height:1.5;}
+.install{background:var(--ink);border-top:1px solid var(--border);}
+.install-paths{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px;}
+.install-path{border:1px solid var(--border);background:var(--surface);padding:32px;transition:border-color 0.2s;}
+.install-path:hover{border-color:var(--border2);}
+.path-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--gold);margin-bottom:16px;}
+.path-title{font-size:18px;font-weight:500;color:var(--bright);margin-bottom:10px;}
+.path-desc{font-size:14px;color:var(--mute);line-height:1.6;margin-bottom:20px;}
+.path-link{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);text-decoration:none;letter-spacing:0.05em;border-bottom:1px solid var(--gold-dim);transition:border-color 0.2s;}
+.path-link:hover{border-color:var(--gold);}
+.code-block{background:var(--black);border:1px solid var(--border);padding:20px 24px;margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--pale);line-height:1.8;overflow-x:auto;}
+.code-comment{color:var(--mute);}
+.code-cmd{color:var(--bone);}
+.code-arg{color:var(--gold);}
+footer{border-top:1px solid var(--border);padding:48px 0;}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;}
+.footer-brand{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px;}
+.footer-by{font-size:13px;color:var(--mute);}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap;}
+.footer-links a{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--mute);text-decoration:none;text-transform:uppercase;transition:color 0.2s;}
+.footer-links a:hover{color:var(--pale);}
+.footer-mit{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--border2);letter-spacing:0.1em;margin-top:32px;text-align:center;}
+@media(max-width:720px){.problem-grid,.install-paths{grid-template-columns:1fr;gap:32px;}.proof-grid{grid-template-columns:1fr 1fr;}.hero-stats,.nav-links{display:none;}}
+@media(max-width:480px){.proof-grid{grid-template-columns:1fr;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.hero-tag{animation:fadeUp 0.6s 0.1s both;}
+.hero-title{animation:fadeUp 0.6s 0.2s both;}
+.hero-subtitle{animation:fadeUp 0.6s 0.35s both;}
+.hero-actions{animation:fadeUp 0.6s 0.5s both;}
+.hero-stats{animation:fadeUp 0.6s 0.6s both;}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">ADAM/</a>
+    <div class="nav-links">
+      <a href="#architecture">Architecture</a>
+      <a href="#proof">Proof</a>
+      <a href="#lineage">Story</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/strangeadvancedmarketing/Adam" class="nav-cta">GitHub &rarr;</a>
+    </div>
+  </div>
+</nav>
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Adam Framework</div>
+    <h1 class="hero-title">AI Amnesia.<br><em>Solved.</em></h1>
+    <p class="hero-subtitle">Every time you start a new session, your AI forgets everything. This framework fixes that &mdash; with 4 layers of persistent memory, a neural graph that grows nightly, and 353 sessions of production proof.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/strangeadvancedmarketing/Adam" class="btn-primary">View on GitHub</a>
+      <a href="#install" class="btn-secondary">Install in 30 min &rarr;</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">353</div><div class="hero-stat-label">Sessions</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">12,393</div><div class="hero-stat-label">Neurons</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">8mo</div><div class="hero-stat-label">Production</div></div>
+    </div>
+  </div>
+</section>
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item"><span>&#10022;</span> 353 sessions</span><span class="ticker-item"><span>&#10022;</span> 6,619 message turns</span><span class="ticker-item"><span>&#10022;</span> 12,393 neurons</span><span class="ticker-item"><span>&#10022;</span> 40,532 synapses</span><span class="ticker-item"><span>&#10022;</span> 4 model migrations survived</span><span class="ticker-item"><span>&#10022;</span> 2 full rebuilds survived</span><span class="ticker-item"><span>&#10022;</span> identity preserved through all of it</span><span class="ticker-item"><span>&#10022;</span> built by one non-coder</span><span class="ticker-item"><span>&#10022;</span> runs on consumer hardware</span><span class="ticker-item"><span>&#10022;</span> model-agnostic</span><span class="ticker-item"><span>&#10022;</span> MIT license</span>
+    <span class="ticker-item"><span>&#10022;</span> 353 sessions</span><span class="ticker-item"><span>&#10022;</span> 6,619 message turns</span><span class="ticker-item"><span>&#10022;</span> 12,393 neurons</span><span class="ticker-item"><span>&#10022;</span> 40,532 synapses</span><span class="ticker-item"><span>&#10022;</span> 4 model migrations survived</span><span class="ticker-item"><span>&#10022;</span> 2 full rebuilds survived</span><span class="ticker-item"><span>&#10022;</span> identity preserved through all of it</span><span class="ticker-item"><span>&#10022;</span> built by one non-coder</span><span class="ticker-item"><span>&#10022;</span> runs on consumer hardware</span><span class="ticker-item"><span>&#10022;</span> model-agnostic</span><span class="ticker-item"><span>&#10022;</span> MIT license</span>
+  </div>
+</div>
+<section class="problem" id="problem">
+  <div class="wrap">
+    <div class="problem-grid">
+      <div>
+        <div class="section-tag">The Problem</div>
+        <h2 class="section-title">Your AI wakes up blank. Every. Single. Time.</h2>
+        <p class="section-body">You've explained your projects, your people, your preferences &mdash; dozens of times. The AI is powerful inside a single conversation and completely useless as a long-term collaborator. That's AI Amnesia. The Adam Framework is the architectural fix.</p>
+      </div>
+      <div class="problem-visual">
+        <span class="log-line"><span class="log-time">[SESSION 001]</span> <span class="log-ok">Context loaded. Adam knows who you are.</span></span>
+        <span class="log-line"><span class="log-time">[SESSION 047]</span> <span class="log-ok">Neural graph: 3,200 neurons active.</span></span>
+        <span class="log-line"><span class="log-time">[SESSION 119]</span> <span class="log-ok">Reconcile complete. Memory compounds.</span></span>
+        <span class="log-line"><span class="log-time">[REBUILD]</span> <span class="log-gold">System wiped. Vault files survived.</span></span>
+        <span class="log-line"><span class="log-time">[SESSION 120]</span> <span class="log-ok">Identity intact. Picking up where we left off.</span></span>
+        <span class="log-line"><span class="log-time">[SESSION 353]</span> <span class="log-ok">12,393 neurons. 40,532 synapses. Still running.</span></span>
+        <span class="log-line">&nbsp;</span>
+        <span class="log-line"><span class="log-gold">// The AI doesn't forget anymore.</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="architecture">
+  <div class="wrap">
+    <div class="section-tag">How It Works</div>
+    <h2 class="section-title">Four layers.<br>One continuous memory.</h2>
+    <p class="section-body">Each layer solves a specific failure mode that appeared in production. Together they close every gap between session end and session start.</p>
+    <div class="arch-layers">
+      <div class="arch-layer"><div class="arch-num">01</div><div><div class="arch-name">Vault Injection</div><div class="arch-desc">Identity files compiled by SENTINEL before every boot. Your AI knows who it is, what's active, and today's date before it says a single word. Deterministic. No inference. Just files.</div></div></div>
+      <div class="arch-layer"><div class="arch-num">02</div><div><div class="arch-name">Session Memory Search</div><div class="arch-desc">Hybrid vector + text search across all prior sessions and Vault content. 70% semantic, 30% exact match. The AI retrieves what's relevant mid-conversation without loading everything upfront.</div></div></div>
+      <div class="arch-layer"><div class="arch-num">03</div><div><div class="arch-name">Neural Graph</div><div class="arch-desc">A local SQLite knowledge graph with spreading activation, Hebbian learning, and temporal decay. Concepts link to concepts. Context propagates. 12,393 neurons built from 353 sessions &mdash; and growing every night.</div></div></div>
+      <div class="arch-layer"><div class="arch-num">04</div><div><div class="arch-name">Nightly Reconciliation</div><div class="arch-desc">When the context window approaches its limit, the AI writes its own memory flush before truncation. Nothing is lost. The sleep cycle merges daily logs into core memory via Gemini. Memory compounds while you sleep.</div></div></div>
+    </div>
+  </div>
+</section>
+<section class="proof" id="proof">
+  <div class="wrap">
+    <div class="section-tag">The Proof</div>
+    <h2 class="section-title">Not a demo.<br>A production record.</h2>
+    <p class="section-body">Every number here comes from a live system running real business operations &mdash; not a benchmark, not a controlled test.</p>
+    <div class="proof-grid">
+      <div class="proof-cell"><div class="proof-num">353</div><div class="proof-label">Total sessions across 8 months of production use</div></div>
+      <div class="proof-cell"><div class="proof-num">6,619</div><div class="proof-label">Message turns &mdash; the full conversational record</div></div>
+      <div class="proof-cell"><div class="proof-num">12<em>,</em>393</div><div class="proof-label">Neural graph neurons &mdash; live, updated nightly</div></div>
+      <div class="proof-cell"><div class="proof-num">40<em>,</em>532</div><div class="proof-label">Neural graph synapses &mdash; growing with every reconcile</div></div>
+      <div class="proof-cell"><div class="proof-num">4</div><div class="proof-label">Model migrations survived with no memory loss</div></div>
+      <div class="proof-cell"><div class="proof-num">2</div><div class="proof-label">Full nuclear resets survived &mdash; identity intact both times</div></div>
+    </div>
+    <div class="proof-insight">
+      <p>&ldquo;When the system was completely wiped and rebuilt, the AI came back online with full continuity &mdash; because the Vault files survived. Same base model. Same files. Same AI.&rdquo;</p>
+      <cite>&mdash; docs/PROOF.md &middot; The nuclear reset validation, February 2026</cite>
+    </div>
+  </div>
+</section>
+<section id="lineage">
+  <div class="wrap">
+    <div class="section-tag">The Story</div>
+    <h2 class="section-title">One non-coder.<br>Eight months.<br>Two nuclear resets.</h2>
+    <p class="section-body">This wasn't built in a lab. It was built by someone running a small business in Miami who needed their AI to remember things &mdash; and kept fixing it until it did.</p>
+    <div class="lineage-timeline">
+      <div class="timeline-item"><div class="timeline-date">December 2025</div><div class="timeline-event">ClawdBot &mdash; the beginning</div><div class="timeline-desc">First version. No persistence. The AI reset completely between every session. The problem was obvious within weeks.</div></div>
+      <div class="timeline-item"><div class="timeline-date">January 2026</div><div class="timeline-event">Layer 1 emerges</div><div class="timeline-desc">Write everything down in files, make the AI read them. SOUL.md and CORE_MEMORY.md created. Session coherence improved immediately.</div></div>
+      <div class="timeline-item"><div class="timeline-date">January&ndash;February 2026</div><div class="timeline-event">The compaction problem, then the fix</div><div class="timeline-desc">Important context was getting pushed out as sessions grew. Fix: the AI writes its own memory before truncation. Layer 4 born.</div></div>
+      <div class="timeline-item highlight"><div class="timeline-date">February 14&ndash;16, 2026</div><div class="timeline-event">The nuclear reset</div><div class="timeline-desc">System wiped and rebuilt in 10 hours. The AI came back online knowing every active project &mdash; because the Vault files survived. Architecture validated.</div></div>
+      <div class="timeline-item"><div class="timeline-date">February 25&ndash;28, 2026</div><div class="timeline-event">Full stack complete</div><div class="timeline-desc">Neural graph integrated. SENTINEL hardened. All four layers running simultaneously.</div></div>
+      <div class="timeline-item highlight"><div class="timeline-date">March 3, 2026</div><div class="timeline-event">Public release</div><div class="timeline-desc">353 sessions. 12,393 neurons. 8 months of continuous operation. Templated, documented, and shipped.</div></div>
+    </div>
+    <div style="margin-top:32px;"><a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/docs/LINEAGE.md" class="btn-secondary">Read the full story &rarr;</a></div>
+  </div>
+</section>
+<section class="install" id="install">
+  <div class="wrap">
+    <div class="section-tag">Get Started</div>
+    <h2 class="section-title">30&ndash;60 minutes.<br>Two paths.</h2>
+    <p class="section-body">You need OpenClaw already installed and running. From there, pick your path.</p>
+    <div class="install-paths">
+      <div class="install-path"><div class="path-num">PATH 01 &mdash; YOU DO IT</div><div class="path-title">Human install guide</div><div class="path-desc">Step-by-step for humans. Four phases: identity files, neural memory, Session 000 history seeding, sleep cycle. No assumptions made.</div><a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/SETUP_HUMAN.md" class="path-link">Read SETUP_HUMAN.md &rarr;</a></div>
+      <div class="install-path"><div class="path-num">PATH 02 &mdash; YOUR AI DOES IT</div><div class="path-title">Agent install guide</div><div class="path-desc">Give this doc to your existing AI assistant. It asks you 8 questions and handles the install. Written for AI agents: terse, command-first, explicit success conditions.</div><a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/SETUP_AI.md" class="path-link">Read SETUP_AI.md &rarr;</a></div>
+    </div>
+    <div class="code-block">
+      <span class="code-comment"># Seed your neural graph with your full conversation history</span><br>
+      <span class="code-cmd">python tools\legacy_importer.py</span> <span class="code-arg">--source export.zip --vault-path C:\MyVault --user-name YourName</span><br><br>
+      <span class="code-comment"># Ingest into the neural graph (~56 min for 740 facts)</span><br>
+      <span class="code-cmd">.\tools\ingest_triples.ps1</span> <span class="code-arg">-VaultPath C:\MyVault</span>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-left"><div class="footer-brand">ADAM FRAMEWORK</div><div class="footer-by">Built by Jereme Strange &mdash; Strange Advanced Marketing, Miami FL</div></div>
+      <div class="footer-links">
+        <a href="https://github.com/strangeadvancedmarketing/Adam">GitHub</a>
+        <a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/docs/ARCHITECTURE.md">Architecture</a>
+        <a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/docs/LINEAGE.md">Lineage</a>
+        <a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/CONTRIBUTING.md">Contribute</a>
+        <a href="https://github.com/strangeadvancedmarketing/Adam/blob/master/ROADMAP.md">Roadmap</a>
+      </div>
+    </div>
+    <div class="footer-mit">MIT LICENSE &middot; THE MEMORY IS IN THE FILES &middot; THE MODEL IS JUST THE READER</div>
+  </div>
+</footer>
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+document.querySelectorAll('.arch-layer, .timeline-item').forEach(el => observer.observe(el));
+document.querySelectorAll('.arch-layer').forEach((el, i) => { el.style.transitionDelay = (i * 0.1) + 's'; });
+document.querySelectorAll('.timeline-item').forEach((el, i) => { el.style.transitionDelay = (i * 0.08) + 's'; });
+</script>
+</body>
+</html>
