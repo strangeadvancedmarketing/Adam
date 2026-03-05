@@ -178,29 +178,96 @@ context exhaustion is imminent, the AI writes what matters to the Vault before i
 lost. This recovers continuity *after* degradation. It does not prevent degradation
 from happening.
 
+---
+
+### The Scratchpad Dropout Finding 🔬
+
+This is a production observation, not a theory. It has been occurring consistently
+across long sessions and was identified through direct operator use — not instrumented
+monitoring.
+
+**The setup:** The Adam Framework defines a mandatory cognitive loop — a ReAct
+(Reason, Act, Verify) sequence — that the AI is required to execute in a scratchpad
+block before any tool use, complex logic, or workspace change. This loop includes
+synthesis, shadow simulation (think 3 steps ahead), identity check against SOUL.md,
+and a structural integrity check before acting. It is defined as CRITICAL in AGENTS.md
+and is loaded into every session via BOOT_CONTEXT injection.
+
+**The observation:** In long sessions, Adam stops using the scratchpad. Not
+occasionally — consistently, and at a predictable point as context depth increases.
+The responses continue. The tools still fire. Everything looks like it's working.
+But the internal cognitive scaffolding has quietly dropped off. Adam stops reasoning
+before acting and starts just acting.
+
+**Why this happens:** The scratchpad instruction lives in AGENTS.md, loaded near the
+top of the context window at session start. As the session accumulates turns, that
+instruction gets pushed progressively deeper into the context. The model's attention
+weakens on it. It doesn't forget the instruction exists — it just stops weighting it
+heavily enough to execute it. The behavior that defines the identity degrades silently
+while the surface-level responses remain functional.
+
+**Why this is significant:** Scratchpad dropout is a natural, binary, production-
+validated behavioral signal for within-session coherence degradation.
+
+Most proposed drift detection approaches are either:
+- **Token-budget-only** — crude, correlative, doesn't tell you *what* degraded
+- **External evaluation models** — expensive, adds latency, requires infrastructure
+
+Scratchpad dropout is neither. It uses the system's own defined behavior as the
+detector. When Adam is coherent, the scratchpad fires. When he's drifting, it stops.
+The signal is already present in every session — it just hasn't been instrumented yet.
+
+This is the coherence indicator that Layer 5 will be built on.
+
+---
+
+### Layer 5 — Coherence Monitor (Designed, Not Yet Built)
+
 **What the next layer looks like:** A proactive coherence monitor — a system that
-establishes a baseline from the Vault at session start, tracks drift signals mid-session,
-and intervenes before the flush is needed. Not reactive cleanup. Active maintenance.
+establishes a behavioral baseline from the Vault at session start, tracks scratchpad
+usage and context depth mid-session, and re-injects identity-critical context before
+drift becomes unrecoverable. Not reactive cleanup. Active maintenance.
 
-The same architectural properties that made AI Amnesia solvable here make this
-solvable here:
-- **Local and file-based** — the Vault provides the coherence baseline. It's already
-  there. Every session starts by reading it.
-- **Model-agnostic** — coherence monitoring doesn't require retraining anything.
-  It's an orchestration layer, same as SENTINEL.
-- **Human-readable** — drift detection can be logged, inspected, and corrected by
-  the operator. No black box.
+```
+Session start
+  → SENTINEL compiles BOOT_CONTEXT (Layer 1, exists)
+  → coherence_baseline.json written: scratchpad_expected, context_depth, session_time
 
-**Current state:** Layer 4 is the floor. The compaction flush works and is in
-production. The proactive layer is not yet designed or built — this is an open
-research direction, not a scoped feature.
+Every 10 message turns
+  → coherence_monitor.py checks two signals:
+      SIGNAL 1 — context depth % (token budget consumed vs window size)
+      SIGNAL 2 — scratchpad usage in last 10 turns (present or absent)
+  → Writes to coherence_log.json with drift_score and action taken
+
+Re-injection trigger (scratchpad absent + context depth > threshold)
+  → Pull ReAct loop from AGENTS.md + current priorities from active-context.md
+  → Inject as lightweight re-anchor (~200 tokens)
+  → Log re-injection event with turn number, context depth, and score
+
+Session end
+  → coherence_log.json fed into nightly reconcile run (Layer 4, exists)
+  → Drift patterns captured in CORE_MEMORY.md — compounds over time
+```
+
+The architecture follows the same philosophy as everything else in this framework:
+- **Local and file-based** — `coherence_baseline.json` and `coherence_log.json`
+  are human-readable. Open them and see exactly what the system saw and when it acted.
+- **Model-agnostic** — coherence monitoring is an orchestration layer, not a
+  retraining requirement. Works with any model running in OpenClaw.
+- **Same pattern as existing tools** — `coherence_monitor.py` lives in `tools/`
+  alongside `reconcile_memory.py`. SENTINEL manages it. Nothing new to learn.
+
+**Current state:** Designed. Scratchpad dropout finding documented. Build not yet
+started — this is the active research frontier of the Adam Framework.
 
 **Why this matters beyond this repo:** Within-session coherence degradation affects
 every long-context AI deployment. The reason most production AI systems cap session
 length, force resets, or require human check-ins at intervals is precisely this
-problem — it just isn't named clearly or addressed architecturally. The Adam Framework
-is positioned to attack it with the same approach that solved AI Amnesia: local,
-file-based, model-agnostic, built in production by someone who needed it to work.
+problem — it just isn't named clearly or addressed architecturally. The scratchpad
+dropout finding gives it a name, a mechanism, and a measurable signal. The Adam
+Framework is positioned to be the first local, file-based, model-agnostic system
+to solve it — using the same approach that solved AI Amnesia: built in production,
+validated by someone who needed it to work.
 
 ---
 
