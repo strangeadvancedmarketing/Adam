@@ -80,7 +80,7 @@ The Adam Framework solves this at the architecture level with 4 complementary la
 
 **At scale (production numbers):**
 - 12,393 neurons
-- 40,498 synapses
+- 40,532 synapses
 - 353 sessions of accumulated knowledge
 
 ---

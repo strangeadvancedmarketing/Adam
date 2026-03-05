@@ -118,7 +118,7 @@ if (Test-Path $reconcileScript) {
         } catch { }
 
         if ($geminiKey) {
-            $result = & python "$reconcileScript" --vault-path "$VAULT_PATH" --api-key "$geminiKey" 2>&1 | Out-String
+            $result = & $PYTHON_EXE "$reconcileScript" --vault-path "$VAULT_PATH" --api-key "$geminiKey" 2>&1 | Out-String
             Write-Log "Sleep cycle complete."
         } else {
             Write-Log "Sleep cycle skipped: GEMINI_API_KEY not found in openclaw.json."

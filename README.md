@@ -62,6 +62,7 @@ All four layers run simultaneously. The memory is in the files. The model is jus
 ```
 adam-framework/
 ├── README.md
+├── CONTRIBUTING.md            ← How to contribute (Linux port, new providers, etc.)
 ├── SETUP_HUMAN.md             ← Human guide: you have OpenClaw, now give it a soul
 ├── SETUP_AI.md                ← Agent guide: have your existing AI set this up for you
 ├── engine/
@@ -81,6 +82,8 @@ adam-framework/
 │   ├── ARCHITECTURE.md            ← Deep dive on all 4 layers
 │   ├── CONFIG_REFERENCE.md        ← Every config field explained
 │   ├── PROOF.md                   ← The 353-session proof of work
+│   ├── CONTEXT_COMPILER.md        ← How BOOT_CONTEXT.md works (hippocampus/cortex split)
+│   ├── SWARM.md                   ← Multi-agent coordination via shared Vault
 │   ├── LESSONS_LEARNED.md         ← Production failure log: symptoms, root causes, fixes
 │   └── LINEAGE.md                 ← How this was built: the uncut origin story
 └── showcase/
