@@ -135,7 +135,7 @@ This means:
 - **Operator-auditable** — every fact the AI "knows" at boot is in a readable file
 - **Incrementally improvable** — tune what gets compiled into BOOT_CONTEXT.md
   based on what you actually need in sessions
-- **Survives nuclear resets** — wipe the gateway, rebuild from scratch, the cortex
+- **Survives system rebuilds** — wipe the gateway, rebuild from scratch, the cortex
   files survive and the hippocampus compiles fresh from them
 
 The nuclear reset validation in February 2026 proved this directly: the system was
