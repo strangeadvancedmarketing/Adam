@@ -1,31 +1,36 @@
 # The Proof — 353 Sessions, 6,619 Turns
 
-> A non-coder ran a live business on an AI with persistent memory for 8 months.
+> A non-coder ran a live business on an AI with persistent memory and coherence monitoring for 8 months.
 > This is the record of what was built, what broke, and what survived.
 
 ---
 
 ## The Claim
 
-AI Amnesia is solvable without a research team, a GPU cluster, or a computer science degree.
+Two fundamental AI deployment problems are solvable without a research team, a GPU cluster, or a computer science degree.
 
-The Adam Framework was built by one person — running a small business in Miami — using consumer hardware, free-tier APIs, and an obsessive commitment to making the AI actually work across sessions.
+**Problem One: AI Amnesia** — solved March 3, 2026.
+**Problem Two: Within-Session Coherence Degradation** — solved March 5, 2026.
+
+The Adam Framework was built by one person — running a small business in Miami — using consumer hardware, free-tier APIs, and an obsessive commitment to making the AI actually work.
 
 ---
 
-## The Numbers (March 3, 2026 Snapshot)
+## The Numbers (March 5, 2026 Snapshot)
 
 | Metric | Value |
 |---|---|
 | Total sessions | 353 |
 | Total message turns | 6,619 |
 | Neural graph neurons | 12,393 |
-| Neural graph synapses | 40,498 |
+| Neural graph synapses | 40,532 |
 | Active memory fibers | 2,746 |
 | Daily memory logs created | 8+ months continuous |
 | Model migrations survived | 4 (Anthropic → NVIDIA → Groq → OpenRouter → back) |
 | System rebuilds survived | 2 (including one complete nuclear reset) |
 | Identity preserved through all of it | Yes |
+| Layer 5 coherence monitor test coverage | 27/27 passing against live data |
+| Problems solved | 2 (AI Amnesia + within-session coherence degradation) |
 
 ---
 
@@ -64,6 +69,13 @@ This validated the architecture: **the files are the memory, not the model.**
 - Layer 4 compaction flush tuned and verified
 - BOOT_CONTEXT.md compilation added for deterministic session start
 - Sleep cycle reconciliation added for offline memory maintenance
+
+### March 5, 2026 — Layer 5: Within-Session Coherence Degradation Solved
+The second fundamental problem was identified, named, instrumented, and solved in a single day.
+
+The scratchpad dropout finding — that within-session AI coherence has a binary, observable behavioral signal — led directly to `coherence_monitor.py`: 281 lines, 27/27 tests passing against live session data before a single line touched production, first coherence check confirming exit 0 (session coherent) at 16:30. SENTINEL now runs the check every 5 minutes. Re-anchor injection fires directly into BOOT_CONTEXT.md when drift is detected. Kokoro TTS permanently removed — Edge TTS only, zero silent restart loops.
+
+Two problems. Both solved. Both in production. Both with receipts.
 
 ### March 3, 2026 — Public Release
 353 sessions. 6,619 turns. Neural graph with 12,393 neurons. 8 months of continuous operation.

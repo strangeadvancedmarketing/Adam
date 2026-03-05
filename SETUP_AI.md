@@ -80,6 +80,8 @@ Read `vault-templates/CORE_MEMORY.template.md`. Apply the same substitutions as 
 ```powershell
 Copy-Item "vault-templates\BOOT_SEQUENCE.md" "$VAULT\workspace\BOOT_SEQUENCE.md"
 Copy-Item "vault-templates\active-context.template.md" "$VAULT\workspace\active-context.md"
+Copy-Item "vault-templates\coherence_baseline.template.json" "$VAULT\workspace\coherence_baseline.json"
+Copy-Item "vault-templates\coherence_log.template.json" "$VAULT\workspace\coherence_log.json"
 ```
 
 **Success condition:** Both files exist at destination paths.
@@ -121,7 +123,7 @@ Copy-Item "engine\SENTINEL.template.ps1" "$env:USERPROFILE\.openclaw\SENTINEL.ps
 
 Edit `$env:USERPROFILE\.openclaw\SENTINEL.ps1`:
 - Set `$VAULT_PATH` to `{{VAULT_PATH}}`
-- Set `$USE_KOKORO` to `$false` (unless user confirmed Kokoro is installed)
+- Set `$PYTHON_EXE` to `"python"` (or full path if python is not in PATH)
 - If user provided Telegram: no changes needed here; Telegram is configured in openclaw.json
 
 **Test SENTINEL:**

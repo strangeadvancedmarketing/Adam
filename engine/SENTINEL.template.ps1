@@ -25,17 +25,11 @@
 ###############################################################
 
 # ── CONFIGURE THESE FOR YOUR SYSTEM ─────────────────────────
-$VAULT_PATH  = "C:\YOUR_VAULT_PATH"           # e.g. C:\MyAIVault
-$OPENCLAW_DIR = "$env:USERPROFILE\.openclaw"  # Usually fine as-is
+$VAULT_PATH   = "C:\YOUR_VAULT_PATH"           # e.g. C:\MyAIVault
+$OPENCLAW_DIR = "$env:USERPROFILE\.openclaw"   # Usually fine as-is
 $GATEWAY_CMD  = "$OPENCLAW_DIR\gateway.cmd"
 $LOG_FILE     = "$OPENCLAW_DIR\sentinel.log"
-
-# Optional: Kokoro TTS (local voice fallback) — remove if not using
-$USE_KOKORO  = $false   # Set to $true if you have Kokoro installed
-$PYTHON_EXE  = "C:\YOUR_PYTHON_PATH\python.exe"  # e.g. Python312\python.exe
-$KOKORO_DIR  = "C:\YOUR_KOKORO_PATH\kokoro-tts"
-$KOKORO_LOG  = "$OPENCLAW_DIR\kokoro_stdout.log"
-$KOKORO_ERR  = "$OPENCLAW_DIR\kokoro_stderr.log"
+$PYTHON_EXE   = "python"                       # Override if needed: C:\Python312\python.exe
 # ─────────────────────────────────────────────────────────────
 
 function Write-Log($msg) {
@@ -55,26 +49,45 @@ function Start-Gateway {
     return $proc
 }
 
-function Start-Kokoro {
-    if (-not $USE_KOKORO) { return $null }
-    $proc = Start-Process `
-        -FilePath $PYTHON_EXE `
-        -ArgumentList "server.py" `
-        -WorkingDirectory $KOKORO_DIR `
-        -RedirectStandardOutput $KOKORO_LOG `
-        -RedirectStandardError  $KOKORO_ERR `
-        -WindowStyle Hidden `
-        -PassThru
-    Write-Log "Kokoro TTS started - PID $($proc.Id)"
-    return $proc
+function Invoke-CoherenceCheck {
+    $script = "$VAULT_PATH\tools\coherence_monitor.py"
+    if (-not (Test-Path $script)) { return }
+    try {
+        $result = & $PYTHON_EXE $script --vault-path "$VAULT_PATH" 2>&1
+        $exit   = $LASTEXITCODE
+        if ($exit -eq 1) {
+            Write-Log "Coherence monitor: drift detected — re-anchor pending."
+        } elseif ($exit -eq 0) {
+            Write-Log "Coherence monitor: session coherent."
+        } else {
+            Write-Log "Coherence monitor: error (exit $exit) — skipping."
+        }
+    } catch {
+        Write-Log "Coherence monitor: exception — $($_.Exception.Message)"
+    }
+}
+
+function Invoke-ReAnchor {
+    $pendingFile = "$VAULT_PATH\workspace\reanchor_pending.json"
+    if (-not (Test-Path $pendingFile)) { return }
+    try {
+        $pending = Get-Content $pendingFile -Raw | ConvertFrom-Json
+        if ($pending.consumed -eq $false -and $pending.content) {
+            $bootContext = "$VAULT_PATH\workspace\BOOT_CONTEXT.md"
+            $section = "`n`n---`n`n## Re-Anchor Injection ($($pending.timestamp))`n`n$($pending.content)"
+            Add-Content -Path $bootContext -Value $section -Encoding UTF8
+            $pending.consumed = $true
+            $pending | ConvertTo-Json | Set-Content $pendingFile -Encoding UTF8
+            Write-Log "Re-anchor injected into BOOT_CONTEXT.md."
+        }
+    } catch {
+        Write-Log "Re-anchor failed (non-fatal): $($_.Exception.Message)"
+    }
 }
 
 # ── 1. KILL STALE INSTANCES ──────────────────────────────────
 Write-Log "Sentinel rising. Clearing stale processes..."
-Get-Process node    -ErrorAction SilentlyContinue | Stop-Process -Force
-if ($USE_KOKORO) {
-    Get-Process python* -ErrorAction SilentlyContinue | Stop-Process -Force
-}
+Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep 2
 Write-Log "Stale processes cleared."
 
@@ -160,10 +173,7 @@ Write-Log "Launching OpenClaw Gateway..."
 $gateway = Start-Gateway
 Write-Log "Gateway LIVE on port 18789."
 
-# ── 6. LAUNCH KOKORO (optional) ──────────────────────────────
-$kokoro = Start-Kokoro
-
-Write-Log "SENTINEL ACTIVE — Watchdog loop starting. Checking gateway every 30s."
+Write-Log "SENTINEL ACTIVE — Watchdog loop starting. Gateway check every 30s. Coherence monitor every 5 min."
 
 # ── 7. VECTOR REINDEX (after gateway confirmed healthy) ──────
 # This fires only if the sleep cycle ran this session.
@@ -200,11 +210,13 @@ if ($runReconcile) {
 }
 
 # ── 8. WATCHDOG LOOP ─────────────────────────────────────────
-# This is the heartbeat. Every 30 seconds, check if the gateway
-# is still alive. If it died, restart it automatically.
+# Every 30 seconds: check gateway alive, restart if dead.
+# Every 10 ticks (5 minutes): run Layer 5 coherence check.
 # Your AI should never be down for more than 30 seconds.
+$coherenceCounter = 0
 while ($true) {
     Start-Sleep 30
+    $coherenceCounter++
 
     $nodeAlive = Get-Process -Id $gateway.Id -ErrorAction SilentlyContinue
     if (-not $nodeAlive) {
@@ -213,11 +225,9 @@ while ($true) {
         Write-Log "Gateway restarted - PID $($gateway.Id)"
     }
 
-    if ($USE_KOKORO -and $kokoro) {
-        $kokoroAlive = Get-Process -Id $kokoro.Id -ErrorAction SilentlyContinue
-        if (-not $kokoroAlive) {
-            Write-Log "Kokoro died. Restarting..."
-            $kokoro = Start-Kokoro
-        }
+    if ($coherenceCounter -ge 10) {
+        $coherenceCounter = 0
+        Invoke-ReAnchor
+        Invoke-CoherenceCheck
     }
 }

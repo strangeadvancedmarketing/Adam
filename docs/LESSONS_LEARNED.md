@@ -207,3 +207,87 @@ When something breaks and you don't know where:
 > reloading and keeps running on stale state.**
 >
 > If behavior is wrong but the process is alive, check the config first.
+
+---
+
+## [2026-03-05] Dual SENTINEL instances cause gateway crash loop
+
+### Symptom
+Gateway dies every 30-60 seconds. SENTINEL watchdog catches it and immediately
+restarts — but the gateway dies again within the minute. Sentinel log shows repeated:
+```
+WARNING: Gateway process died. Restarting...
+Gateway started - PID XXXXX
+```
+Killing and restarting SENTINEL seems to fix it but the problem returns.
+
+### Root Cause
+Two SENTINEL instances running simultaneously. One started manually (e.g., direct
+PowerShell invocation for testing), a second spawned by Task Scheduler. Both
+instances watch for a dead gateway — but each one's watchdog kills the gateway
+process that the *other* started, because the gateway process was launched by the
+other instance and has a different PID reference.
+
+Both watchdogs see a dead process → both restart the gateway → both kill the other's
+restart → loop repeats indefinitely at 30-second intervals.
+
+### How To Diagnose
+```powershell
+Get-Process -Name "powershell" | Select-Object Id, StartTime, MainWindowTitle
+```
+If you see two powershell processes both with similar start times and no window
+titles, you have a dual-SENTINEL situation. Confirm by checking:
+```powershell
+Get-Content "$env:USERPROFILE\.openclaw\sentinel.log" -Tail 20
+```
+If the log shows gateway dying and restarting at exact 30s intervals, that's
+the watchdog-vs-watchdog pattern.
+
+### Fix
+Kill the older SENTINEL process (lower PID = older). Keep the one started by
+Task Scheduler — it's the authoritative one and will restart at next login.
+
+```powershell
+# Find the older PID and kill it
+Stop-Process -Id <OLDER_PID> -Force
+```
+
+Gateway stabilizes immediately once only one watchdog is running.
+
+### Prevention
+Always check for running SENTINEL instances before launching manually:
+```powershell
+Get-Process -Name "powershell" | Where-Object { $_.MainWindowTitle -eq "" }
+```
+If any headless PowerShell processes exist, SENTINEL may already be running.
+Check `sentinel.log` to confirm before launching a second instance.
+
+---
+
+## [2026-03-05] Kokoro TTS permanently removed
+
+### Symptom
+SENTINEL log fills with Kokoro restart attempts even when the system is otherwise
+healthy. `kokoro.exe` or `python server.py` crashes silently, SENTINEL detects it
+and restarts, it crashes again. No voice output. Loop continues indefinitely.
+
+### Root Cause
+Kokoro TTS has persistent stability issues — version mismatches, model file path
+problems, port conflicts, and silent crashes that are difficult to diagnose. The
+restart loop consumes log space and SENTINEL overhead without providing value.
+
+### Resolution (Permanent)
+Kokoro TTS removed from SENTINEL entirely. Edge TTS is the default voice layer —
+it's stable, zero-config, no external process to monitor, and produces acceptable
+quality for all current use cases.
+
+`SENTINEL.template.ps1` v1.0.9 has zero Kokoro references. If you copied an older
+version of the template, remove:
+- `$USE_KOKORO`, `$PYTHON_EXE` (if only used for Kokoro), `$KOKORO_DIR`, `$KOKORO_LOG`, `$KOKORO_ERR` variables
+- `Start-Kokoro` function
+- The `if ($USE_KOKORO)` block in the process kill section
+- The `$kokoro = Start-Kokoro` call after gateway launch
+- The Kokoro watchdog restart block inside the while loop
+
+Edge TTS requires no configuration — it's built into Windows and works out of the
+box with OpenClaw's TTS provider block.

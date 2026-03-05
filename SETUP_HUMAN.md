@@ -26,10 +26,11 @@ This framework changes that. By the end of this guide:
 |-------|-----------|----------------|
 | **Vault** | A folder of plain Markdown files | Your AI's long-term memory lives here |
 | **Identity Files** | SOUL.md + CORE_MEMORY.md | The AI reads these at every boot |
-| **SENTINEL** | A watchdog PowerShell script | Starts your AI automatically, keeps it alive |
+| **SENTINEL** | A watchdog PowerShell script | Starts your AI automatically, keeps it alive, runs coherence checks |
 | **Neural Graph** | A local associative memory database | Builds connections between concepts over time |
 | **Session 000** | Your full chat history ingested as facts | Your AI wakes up already knowing your history |
 | **Sleep Cycle** | Nightly Gemini-powered consolidation | Daily logs merged into core memory while you sleep |
+| **Coherence Monitor** | Layer 5 — scratchpad dropout detection | Catches within-session drift every 5 min, auto re-anchors |
 
 ---
 
@@ -75,6 +76,8 @@ copy vault-templates\SOUL.template.md "C:\MyAIVault\SOUL.md"
 copy vault-templates\CORE_MEMORY.template.md "C:\MyAIVault\CORE_MEMORY.md"
 copy vault-templates\BOOT_SEQUENCE.md "C:\MyAIVault\workspace\BOOT_SEQUENCE.md"
 copy vault-templates\active-context.template.md "C:\MyAIVault\workspace\active-context.md"
+copy vault-templates\coherence_baseline.template.json "C:\MyAIVault\workspace\coherence_baseline.json"
+copy vault-templates\coherence_log.template.json "C:\MyAIVault\workspace\coherence_log.json"
 ```
 
 Now open **SOUL.md** in any text editor. Fill in every `{{PLACEHOLDER}}`:
@@ -128,7 +131,7 @@ Open `SENTINEL.ps1` and update the variables at the top:
 
 ```powershell
 $VAULT_PATH  = "C:\MyAIVault"   # ← your actual Vault path
-$USE_KOKORO  = $false           # set $true only if you have Kokoro TTS installed
+$PYTHON_EXE  = "python"         # override if python isn't in your PATH
 ```
 
 Run it manually to test:
