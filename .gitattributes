@@ -1,0 +1,29 @@
+# Adam Framework — Git Attributes
+# Ensures binary files are never mangled by CRLF conversion
+
+# Images — always binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+
+# HTML/CSS/JS — LF only
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+
+# Python — LF only
+*.py text eol=lf
+
+# Markdown — auto (respect platform)
+*.md text
+
+# JSON — LF only
+*.json text eol=lf
+
+# PowerShell — CRLF (Windows native)
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf

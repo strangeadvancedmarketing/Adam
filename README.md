@@ -4,6 +4,8 @@
 > "Every time you start a new session, your AI forgets everything.  
 > This framework fixes that."
 
+![Adam Framework](og-image.png)
+
 **[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The full story](docs/LINEAGE.md)** · **[→ Community showcase](SHOWCASE.md)**
 
 ---

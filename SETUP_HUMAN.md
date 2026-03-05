@@ -291,9 +291,38 @@ Session 000 complete. Your AI already knows you.
 
 ---
 
-## Phase 4 — Make It Self-Sustaining (already done)
+## Phase 4 — Make It Self-Sustaining
 
-SENTINEL already has the sleep cycle wired in. It runs automatically:
+### Step 10: Copy Tools to Your Vault
+
+SENTINEL looks for the sleep cycle and coherence monitor scripts inside your Vault at runtime. You need to copy them there:
+
+```powershell
+Copy-Item -Recurse "tools" "C:\MyAIVault\tools"
+```
+
+Verify:
+```powershell
+Test-Path "C:\MyAIVault\tools\reconcile_memory.py"
+Test-Path "C:\MyAIVault\tools\coherence_monitor.py"
+```
+
+Both should return `True`. If either returns `False`, SENTINEL will silently skip that component on every boot — no error, just a log line saying "not found - skipping."
+
+### Step 11: Add Your Gemini API Key
+
+The sleep cycle uses Gemini to merge daily logs into CORE_MEMORY.md. Add your key to openclaw.json:
+
+Open `$env:USERPROFILE\.openclaw\openclaw.json` and find (or add) the `env` block:
+```json
+"env": {
+  "GEMINI_API_KEY": "your-key-here"
+}
+```
+
+Get a free key at [aistudio.google.com](https://aistudio.google.com/app/apikey).
+
+**What happens automatically after this:**
 
 **Every time your system starts:**
 - SENTINEL checks if the sleep cycle has run in the last 6 hours
@@ -302,11 +331,8 @@ SENTINEL already has the sleep cycle wired in. It runs automatically:
 - New facts get incrementally added to the neural graph
 - After the gateway is healthy, the vector index gets updated
 
-**What you need for this to work:**
-- A free Gemini API key in your openclaw.json under `env.GEMINI_API_KEY`
-- Daily session logs landing in `C:\MyAIVault\workspace\memory\`
-
-The session logs are written by OpenClaw automatically if you configure `memoryFlush` in openclaw.json — see `engine/openclaw.template.json` for the exact config block.
+**What feeds the sleep cycle:**
+Daily session logs landing in `C:\MyAIVault\workspace\memory\` — written by OpenClaw automatically if you configure `memoryFlush` in openclaw.json. See `engine/openclaw.template.json` for the exact config block.
 
 ---
 
