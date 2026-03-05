@@ -137,8 +137,8 @@ Validated in production, not a lab:
 |--------|-------|
 | Total sessions | 353 |
 | Message turns | 6,619 |
-| Neural graph neurons | 7,211 |
-| Neural graph synapses | 29,291 |
+| Neural graph neurons | 12,393 |
+| Neural graph synapses | 40,532 |
 | Model migrations survived | 4 |
 | System rebuilds survived | 2 (including one full nuclear reset) |
 | Identity preserved through all of it | ✓ |
