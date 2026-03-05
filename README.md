@@ -84,6 +84,7 @@ adam-framework/
 │   ├── PROOF.md                   ← The 353-session proof of work
 │   ├── CONTEXT_COMPILER.md        ← How BOOT_CONTEXT.md works (hippocampus/cortex split)
 │   ├── SWARM.md                   ← Multi-agent coordination via shared Vault
+│   ├── SKILLS_SYSTEM.md           ← Pluggable capability layer (documentation-first plugins)
 │   ├── LESSONS_LEARNED.md         ← Production failure log: symptoms, root causes, fixes
 │   └── LINEAGE.md                 ← How this was built: the uncut origin story
 └── showcase/
