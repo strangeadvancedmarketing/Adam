@@ -4,6 +4,8 @@
 > "Every time you start a new session, your AI forgets everything.  
 > This framework fixes that."
 
+**[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The full story](docs/LINEAGE.md)**
+
 ---
 
 ## What This Is
@@ -90,6 +92,32 @@ adam-framework/
 └── showcase/
     └── ai-amnesia-solved.html     ← Interactive data visualization
 ```
+
+---
+
+## What It Looks Like
+
+This is what a successful SENTINEL boot looks like — the AI coming online with full context loaded before you say a word:
+
+```
+[2026-03-03 08:00:01] Sentinel rising. Clearing stale processes...
+[2026-03-03 08:00:02] Date injected: 2026-03-03
+[2026-03-03 08:00:02] Compiling BOOT_CONTEXT.md...
+[2026-03-03 08:00:03] BOOT_CONTEXT.md compiled (4 sources merged)
+[2026-03-03 08:00:04] Gateway started — PID 9421
+[2026-03-03 08:00:04] SENTINEL ACTIVE — Watchdog loop running.
+
+> Hey, good morning.
+
+Adam: Morning. TurfTracker has three contractor leads in the queue from last night —
+Doctor Paver Corp looks strongest, no website, active on Reddit. Sleep cycle ran at
+02:14, merged 6 session logs into CORE_MEMORY. Neural graph at 12,393 neurons.
+What are we working on first?
+```
+
+No "How can I help you today?" No re-explaining your projects. It already knows.
+
+For the full visual proof — 353 sessions of data rendered as charts: **[Interactive showcase →](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)**
 
 ---
 
