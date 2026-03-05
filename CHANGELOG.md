@@ -4,6 +4,39 @@ All notable changes to the Adam Framework are documented here.
 
 ---
 
+## [v1.1.0] — 2026-03-05
+
+### Fixed
+
+#### `engine/SENTINEL.template.ps1` — vector reindex hitting nonexistent HTTP endpoint
+
+**Root cause:** The vector reindex block was calling `POST /api/memory/reindex` on
+the OpenClaw gateway. That endpoint does not exist — OpenClaw exposes no REST route
+for memory reindex operations. Every boot produced:
+
+```
+[SENTINEL] Vector reindex failed (non-fatal): The remote server returned an error: (405) Method Not Allowed.
+```
+
+The error was non-fatal (system continued booting) but the vector index was never
+refreshed after reconcile runs, meaning new memory written by the sleep cycle was
+not searchable until the next manual CLI reindex.
+
+**Fix:** Replaced the `Invoke-WebRequest` block with a direct CLI call:
+```powershell
+$reindexResult = & openclaw memory index --agent main 2>&1 | Out-String
+```
+This is the documented OpenClaw approach (`openclaw memory index`). No HTTP call,
+no auth token required, works on every platform. Confirmed clean on first boot:
+```
+[SENTINEL] Vector reindex triggered successfully.
+```
+
+**Applies to:** `engine/SENTINEL.template.ps1` (public template). Live SENTINEL
+instances should update the reindex block to match.
+
+---
+
 ## [v1.0.10] — 2026-03-05
 
 ### Fixed

@@ -210,6 +210,57 @@ When something breaks and you don't know where:
 
 ---
 
+## [2026-03-05] SENTINEL vector reindex hitting nonexistent HTTP endpoint (405)
+
+### Symptom
+Every SENTINEL boot produces a non-fatal error in the log:
+```
+[SENTINEL] Vector reindex failed (non-fatal): The remote server returned an error: (405) Method Not Allowed.
+```
+System continues booting and Adam responds normally. But memory written by the
+sleep cycle (reconcile run) is not indexed into the vector store — `memory_search`
+misses content from the current cycle until a manual `openclaw memory index` is run.
+
+### Root Cause
+`SENTINEL.template.ps1` (and live SENTINEL instances built from it) called
+`POST /api/memory/reindex` on the OpenClaw gateway after confirming gateway health.
+That HTTP endpoint does not exist in OpenClaw. The gateway returns 405 Method Not
+Allowed. OpenClaw does not expose a REST API for memory reindex operations.
+
+### Fix
+Replace the `Invoke-WebRequest` reindex block with a direct CLI call:
+
+```powershell
+# BEFORE (broken — endpoint does not exist)
+$ocCfg   = Get-Content "$OPENCLAW_DIR\openclaw.json" -Raw | ConvertFrom-Json
+$token   = $ocCfg.gateway.auth.token
+$headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
+$body    = '{"scope":"vault","path":"' + $VAULT_PATH + '"}'
+Invoke-WebRequest -Uri "http://localhost:18789/api/memory/reindex" `
+    -Method POST -Headers $headers -Body $body -TimeoutSec 30 -ErrorAction Stop | Out-Null
+
+# AFTER (correct — use the CLI directly)
+$reindexResult = & openclaw memory index --agent main 2>&1 | Out-String
+```
+
+The CLI command `openclaw memory index --agent main` is the documented approach.
+No HTTP endpoint, no auth token, no gateway dependency beyond it being live.
+
+### How To Confirm
+After applying the fix and restarting SENTINEL, the log should show:
+```
+[SENTINEL] Vector reindex triggered successfully.
+```
+instead of the 405 error.
+
+### Key Insight
+> **OpenClaw does not expose REST endpoints for all CLI operations.**
+> When SENTINEL needs to trigger a gateway-side action, always check the CLI docs
+> (`openclaw help <command>`) before assuming an HTTP route exists.
+> `openclaw memory index`, `openclaw memory status`, etc. are CLI-only — not REST.
+
+---
+
 ## [2026-03-05] coherence_monitor score_drift fall-through causes false positives and BOOT_CONTEXT bloat
 
 ### Symptom

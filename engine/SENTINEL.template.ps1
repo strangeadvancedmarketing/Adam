@@ -1,6 +1,6 @@
 ###############################################################
 #  SENTINEL.template.ps1 - Adam Framework Watchdog
-#  Version: 1.0.9
+#  Version: 1.1.0
 #
 #  WHAT THIS DOES:
 #    1. Kills stale processes from previous sessions
@@ -194,12 +194,9 @@ if ($runReconcile) {
 
     if ($healthy) {
         try {
-            $ocCfg   = Get-Content "$OPENCLAW_DIR\openclaw.json" -Raw | ConvertFrom-Json
-            $token   = $ocCfg.gateway.auth.token
-            $headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
-            $body    = "{`"scope`":`"vault`",`"path`":`"$($VAULT_PATH -replace '\\','\\'))`"}"
-            Invoke-WebRequest -Uri "http://localhost:18789/api/memory/reindex" `
-                -Method POST -Headers $headers -Body $body -TimeoutSec 30 -ErrorAction Stop | Out-Null
+            # OpenClaw does not expose a REST reindex endpoint.
+            # The correct trigger is the CLI: openclaw memory index
+            $reindexResult = & openclaw memory index --agent main 2>&1 | Out-String
             Write-Log "Vector reindex triggered successfully."
         } catch {
             Write-Log "Vector reindex failed (non-fatal): $($_.Exception.Message)"
