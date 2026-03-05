@@ -111,8 +111,7 @@ SENTINEL started as a simple watchdog: a PowerShell script that checked whether 
 gateway process was alive and restarted it if not. It ran on a Windows scheduled task
 every 30 seconds.
 
-Over successive iterations it grew: mutex lock to prevent duplicate instances, Kokoro
-TTS restart on voice failure, BOOT_CONTEXT compilation before gateway launch, sleep
+Over successive iterations it grew: mutex lock to prevent duplicate instances, BOOT_CONTEXT compilation before gateway launch, sleep
 cycle reconciliation for offline memory maintenance, stale process cleanup on boot.
 
 The final SENTINEL is a full bootstrap system. It doesn't just restart the gateway —

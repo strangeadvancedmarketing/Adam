@@ -26,7 +26,7 @@ The core framework is complete and production-validated.
 - ✅ **Legacy importer** — extract facts from Claude and ChatGPT export zips, seed neural graph before Session 000
 - ✅ **Nightly reconcile** — Gemini merges daily logs into CORE_MEMORY.md, incremental neural ingest, metrics snapshot
 - ✅ **Skills system** — documentation-first plugin architecture, four active skills in production
-- ✅ **Telegram interface** — full bidirectional conversation, voice via Kokoro TTS, heartbeat routing
+- ✅ **Telegram interface** — full bidirectional conversation, voice via Edge TTS, heartbeat routing
 - ✅ **Email intelligence** — proactive inbox triage, urgency scoring, Telegram alerts
 - ✅ **Contractor prospector** — lead discovery, demo site generation, GitHub Pages deploy, outreach
 - ✅ **Context compiler** — AI-to-AI handoff with memory injection and structured return parsing
@@ -136,11 +136,6 @@ provider block. SENTINEL manages nothing new; PersonaPlex runs as a hosted servi
   models is to follow weights release with hosted API — Kimi K2.5 is the proof)
 - Native PersonaPlex support merged into OpenClaw mainline
 - Either of these makes this a same-day integration
-
-**Watch for:** Official OpenClaw PersonaPlex integration, further community
-quantizations, and NVIDIA's promised production-focused architecture optimized for
-lower VRAM usage. When a Q4_K or smaller runs cleanly alongside the main model,
-this becomes a straightforward SENTINEL addition.
 
 ---
 

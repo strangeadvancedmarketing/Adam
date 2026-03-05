@@ -4,6 +4,68 @@ All notable changes to the Adam Framework are documented here.
 
 ---
 
+## [v1.0.8] — 2026-03-05
+
+### Added
+- `.github/ISSUE_TEMPLATE/bug_report.md` — structured bug report template with
+  component checklist, log paste areas, and LESSONS_LEARNED cross-reference prompt
+- `.github/ISSUE_TEMPLATE/setup_help.md` — setup help template with phase/step
+  tracking and expected vs. actual output fields
+- `.github/ISSUE_TEMPLATE/feature_request.md` — feature request template with
+  explicit contributor self-identification prompt ("would you build this?")
+- `.github/PULL_REQUEST_TEMPLATE.md` — PR template enforcing repo philosophy:
+  tested on real hardware, no cloud dependencies, Vault files human-readable
+
+### Changed
+- `README.md` — added landing page and showcase links above the fold (first visible
+  element for all visitors); added "What It Looks Like" section with real SENTINEL
+  boot output and Adam's first context-aware response
+
+---
+
+## [v1.0.7] — 2026-03-05
+
+### Added
+- `index.html` — GitHub Pages landing page at strangeadvancedmarketing.github.io/Adam/
+- `ROADMAP.md` — full roadmap: shipped features, near-term work, community
+  opportunities, PersonaPlex voice upgrade research, long-term concepts
+- 15 targeted GitHub repository topics for discoverability
+
+---
+
+## [v1.0.6] — 2026-03-05
+
+### Added
+- `docs/SKILLS_SYSTEM.md` — documentation-first plugin architecture; covers skill
+  definition, activation, the four active production skills, and how to add new ones
+
+---
+
+## [v1.0.5] — 2026-03-05
+
+### Added
+- `docs/CONTEXT_COMPILER.md` — explains BOOT_CONTEXT.md compilation: hippocampus/
+  cortex split, source priority, what gets injected vs. what stays in Vault
+- `docs/SWARM.md` — multi-agent coordination via shared Vault; PATTERN_SEEKER
+  architecture, task queue pattern, swarm coordination primitives
+- `CONTRIBUTING.md` — contribution guide: priorities, how to contribute, what a
+  good PR looks like, repo philosophy
+
+### Fixed
+- `engine/SENTINEL.template.ps1` — corrected boot sequence and mutex lock pattern
+  to match production-validated implementation
+
+---
+
+## [v1.0.4] — 2026-03-05
+
+### Added
+- `showcase/ai-amnesia-solved.html` — interactive data visualization ("The Proof")
+  rendering 353-session development arc as charts; V3 with full timeline,
+  neural growth, session velocity, and key milestone markers
+
+---
+
 ## [v1.0.3] — 2026-03-05
 
 ### Fixed
