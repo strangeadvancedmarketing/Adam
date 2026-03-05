@@ -1,11 +1,12 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.19-2",
-    "lastTouchedAt": "2026-01-01T00:00:00.000Z"
+    "lastTouchedAt": "2026-03-05T00:00:00.000Z"
   },
 
   "env": {
     "LLM_API_KEY": "YOUR_LLM_API_KEY",
+    "GEMINI_API_KEY": "YOUR_GEMINI_API_KEY",
     "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY_OR_REMOVE_THIS_LINE",
     "TELEGRAM_BOT_TOKEN": "YOUR_TELEGRAM_BOT_TOKEN_OR_REMOVE_THIS_LINE",
     "OPENCLAW_GATEWAY_TOKEN": "YOUR_GENERATED_TOKEN_SEE_SETUP_MD"
@@ -96,7 +97,17 @@
       },
       "timeoutSeconds": 1800,
       "typingIntervalSeconds": 6,
-      "typingMode": "instant"
+      "typingMode": "instant",
+      "heartbeat": {
+        "every": "30m",
+        "target": "telegram",
+        "to": "YOUR_TELEGRAM_CHAT_ID:topic:YOUR_TOPIC_ID",
+        "activeHours": {
+          "start": "07:00",
+          "end": "24:00",
+          "timezone": "America/New_York"
+        }
+      }
     }
   },
 

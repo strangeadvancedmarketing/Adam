@@ -80,7 +80,8 @@ adam-framework/
 ├── docs/
 │   ├── ARCHITECTURE.md            ← Deep dive on all 4 layers
 │   ├── CONFIG_REFERENCE.md        ← Every config field explained
-│   └── PROOF.md                   ← The 353-session proof of work
+│   ├── PROOF.md                   ← The 353-session proof of work
+│   └── LESSONS_LEARNED.md         ← Production failure log: symptoms, root causes, fixes
 └── showcase/
     └── ai-amnesia-solved.html     ← Interactive data visualization
 ```
@@ -155,6 +156,17 @@ Full story: [docs/PROOF.md](docs/PROOF.md) · Interactive visualization: [showca
 When the system was completely wiped and rebuilt, the AI came back online with full continuity because the identity files survived. Same base model. Same Vault files. Same AI.
 
 This means the framework is model-agnostic. Swap the LLM, keep the Vault — your AI's memory persists.
+
+---
+
+## Debugging & Known Issues
+
+Something broken? Start with **[docs/LESSONS_LEARNED.md](docs/LESSONS_LEARNED.md)**.
+
+Every failure mode encountered in production is documented there with: exact symptom, root cause, log commands to confirm it, and the fix that worked. The most important rule:
+
+> **The gateway fails silently on bad config — it doesn't crash, it just stops reloading.**
+> If behavior is degraded but the process is alive, check the config first.
 
 ---
 
