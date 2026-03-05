@@ -185,25 +185,34 @@ def check_scratchpad(assistant_turns, window=SCRATCHPAD_WINDOW):
 # ── PART 4: DRIFT SCORING ─────────────────────────────────────────────────────
 def score_drift(scratchpad_present, context_pct):
     """
-    0.0 = fully coherent
-    0.3 = early warning (scratchpad absent, low context)
+    0.0 = fully coherent (scratchpad present, low context)
+    0.2 = healthy pressure (scratchpad present, mid context)
     0.4 = pressure building (scratchpad present, high context)
+    0.3 = early warning (scratchpad absent, low context)
     0.6 = drift likely (scratchpad absent, mid context)
     0.9 = drift confirmed (scratchpad absent, high context)
+
+    NOTE: All scratchpad_present branches must be exhaustive — no fall-through.
     """
-    if scratchpad_present and context_pct < CONTEXT_DRIFT_THRESHOLD:
-        return 0.0
-    if scratchpad_present and context_pct >= CONTEXT_WARN_THRESHOLD:
-        return 0.4
-    if not scratchpad_present and context_pct < CONTEXT_DRIFT_THRESHOLD:
-        return 0.3
-    if not scratchpad_present and context_pct < CONTEXT_WARN_THRESHOLD:
-        return 0.6
-    # scratchpad absent + high context
-    return 0.9
+    if scratchpad_present:
+        if context_pct < CONTEXT_DRIFT_THRESHOLD:
+            return 0.0   # coherent, low pressure
+        elif context_pct < CONTEXT_WARN_THRESHOLD:
+            return 0.2   # coherent, moderate pressure — monitor only
+        else:
+            return 0.4   # coherent but deep context — soft warning
+    else:
+        if context_pct < CONTEXT_DRIFT_THRESHOLD:
+            return 0.3   # scratchpad absent, low context — early warning
+        elif context_pct < CONTEXT_WARN_THRESHOLD:
+            return 0.6   # scratchpad absent, mid context — re-anchor
+        else:
+            return 0.9   # scratchpad absent, deep context — urgent re-anchor
 
 def should_reanchor(drift_score, context_pct):
-    return drift_score >= 0.6 or context_pct >= CONTEXT_WARN_THRESHOLD
+    # Only re-anchor on scratchpad dropout signals (score >= 0.6)
+    # Context depth alone (scratchpad present) never triggers re-anchor
+    return drift_score >= 0.6
 
 # ── PART 5: COHERENCE LOG (SESSION-SCOPED) ────────────────────────────────────
 def load_coherence_log():
