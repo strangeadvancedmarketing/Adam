@@ -360,7 +360,7 @@ and `test_no_fallthrough_exhaustive`. Test count: 27 → 30.
 
 ---
 
-
+## [2026-03-05] Dual SENTINEL instances causing gateway watchdog loop
 
 ### Symptom
 Gateway dies every 30-60 seconds. SENTINEL watchdog catches it and immediately
