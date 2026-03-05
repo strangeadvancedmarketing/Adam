@@ -1,0 +1,9 @@
+{
+  "session_start": "YYYY-MM-DDTHH:MM:SS",
+  "scratchpad_expected": true,
+  "context_window_tokens": 131072,
+  "estimated_tokens_used": 0,
+  "reinjections": 0,
+  "last_check_turn": 0,
+  "drift_events": []
+}

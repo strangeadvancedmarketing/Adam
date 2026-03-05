@@ -1,0 +1,13 @@
+{
+  "session_start": "YYYY-MM-DDTHH:MM:SS",
+  "events": [
+    {
+      "timestamp": "YYYY-MM-DDTHH:MM:SS",
+      "turn": 0,
+      "context_pct": 0.0,
+      "scratchpad_fired": true,
+      "drift_score": 0.0,
+      "action": "coherent"
+    }
+  ]
+}
