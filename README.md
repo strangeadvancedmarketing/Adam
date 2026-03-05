@@ -92,11 +92,12 @@ adam-framework/
 │   ├── ingest_triples.ps1         ← Step 2: Feed extracted facts into neural graph
 │   ├── reconcile_memory.py        ← Nightly sleep cycle (runs via SENTINEL)
 │   ├── coherence_monitor.py       ← Layer 5: scratchpad dropout detector + re-anchor
-│   └── test_coherence_monitor.py  ← 27-test suite, validated against live session data
+│   └── test_coherence_monitor.py  ← 30-test suite, validated against live session data
 ├── docs/
 │   ├── ARCHITECTURE.md            ← Deep dive on all 4 layers
 │   ├── CONFIG_REFERENCE.md        ← Every config field explained
 │   ├── PROOF.md                   ← The 353-session proof of work
+│   ├── SETUP.md                   ← Detailed setup guide (30-min walkthrough)
 │   ├── CONTEXT_COMPILER.md        ← How BOOT_CONTEXT.md works (hippocampus/cortex split)
 │   ├── SWARM.md                   ← Multi-agent coordination via shared Vault
 │   ├── SKILLS_SYSTEM.md           ← Pluggable capability layer (documentation-first plugins)
