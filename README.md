@@ -81,7 +81,8 @@ adam-framework/
 │   ├── ARCHITECTURE.md            ← Deep dive on all 4 layers
 │   ├── CONFIG_REFERENCE.md        ← Every config field explained
 │   ├── PROOF.md                   ← The 353-session proof of work
-│   └── LESSONS_LEARNED.md         ← Production failure log: symptoms, root causes, fixes
+│   ├── LESSONS_LEARNED.md         ← Production failure log: symptoms, root causes, fixes
+│   └── LINEAGE.md                 ← How this was built: the uncut origin story
 └── showcase/
     └── ai-amnesia-solved.html     ← Interactive data visualization
 ```

@@ -74,6 +74,66 @@ leave the system running on stale config. You won't see an obvious crash.
 
 ---
 
+## [2026-03-05] session-store rename failures caused by MCP filesystem handle retention
+
+### Symptom
+Gateway logs continue to show:
+```
+[session-store] rename failed after 5 attempts: ...sessions.json
+```
+This persists even after fixing the invalid config key (see entry above).
+Errors resume within seconds of every gateway restart.
+
+### Root Cause
+The Claude desktop app (or any MCP client with filesystem access) was holding
+persistent open file handles on `sessions.json` via the Desktop Commander MCP
+integration. Windows does not allow atomic rename operations (`fs.rename()`) when
+the destination file is held open by another process — even a read handle blocks it.
+
+Identified via Sysinternals `handle64.exe`:
+```
+handle64 -p <gateway_pid> sessions.json
+```
+Output showed `claude.exe` (PID 1076) with two open handles — acquired during
+earlier diagnostic `read_file` calls in the same session — that were never released
+because the MCP client holds handles for the lifetime of the conversation session.
+
+This is a Windows-specific behavior. On Linux/macOS, rename over an open file
+succeeds because inodes are unlinked, not locked. On Windows, the file must be
+closed before it can be replaced.
+
+### Fix Applied
+Removed `.openclaw\agents` from Desktop Commander's `allowedDirectories` config:
+```json
+"allowedDirectories": [
+  "C:\\Users\\AJSup\\Desktop",
+  "C:\\Users\\AJSup\\adam-framework-public",
+  "C:\\Users\\AJSup\\AppData\\Roaming\\npm",
+  "C:\\AdamsVault",
+  "C:\\Users\\AJSup\\.openclaw"
+]
+```
+The sessions subdirectory is excluded — MCP tools can no longer open those files.
+New sessions start clean with zero handles on the sessions directory.
+
+### How To Diagnose This In Your Deployment
+If rename errors persist after fixing config issues, run:
+```powershell
+# Download handle64 from Sysinternals if not present
+# Then:
+& "C:\path\to\handle64.exe" -p (Get-Process -Name "openclaw*").Id sessions.json
+```
+If any process other than the gateway itself has handles open, that's your culprit.
+Scope it out of whatever filesystem access tool is holding it.
+
+### Key Insight
+> MCP filesystem integrations that allow broad directory access will acquire and
+> hold read handles for the duration of the client session. On Windows this silently
+> blocks atomic writes in those directories. Scope `allowedDirectories` precisely —
+> only what actually needs to be touched, nothing broader.
+
+---
+
 ## [2026-02-XX] SENTINEL watchdog failing to restart after crash
 
 ### Symptom

@@ -4,6 +4,31 @@ All notable changes to the Adam Framework are documented here.
 
 ---
 
+## [v1.0.3] — 2026-03-05
+
+### Fixed
+- **Root cause of `session-store` rename failures fully identified and resolved**
+  The rename errors persisted after the v1.0.2 config fix, pointing to a second
+  independent issue. Process handle inspection (via Sysinternals handle64) identified
+  the actual culprit: the Claude desktop app (PID 1076) was holding two persistent
+  file handles on `sessions.json` via the Desktop Commander MCP filesystem integration.
+  Windows blocks atomic rename operations when any process holds the destination file open.
+  
+  **Fix:** Removed `C:\Users\AJSup\.openclaw\agents` from Desktop Commander's
+  `allowedDirectories` config. The MCP client can no longer open files in the sessions
+  directory, so no handles are acquired. Rename operations now succeed cleanly.
+
+- **Corrected LESSONS_LEARNED entry for session-store rename errors**
+  Previous entry incorrectly attributed the rename failures solely to the config reload
+  loop. The reload loop was one contributing factor, but the persistent rename failures
+  were independently caused by MCP filesystem handle retention. Both root causes are now
+  documented accurately.
+
+### Added
+- `docs/LESSONS_LEARNED.md` updated with the MCP handle contention entry
+
+---
+
 ## [v1.0.2] — 2026-03-05
 
 ### Fixed
