@@ -18,10 +18,6 @@ to work and kept fixing it until it did. Contributions that come from the same p
   Templates or documented config blocks for OpenRouter, Groq, Ollama, and Anthropic
   would make setup faster for people on different providers.
 
-- **Windows Task Scheduler setup guide** — SETUP_HUMAN.md references registering
-  SENTINEL as a scheduled task but doesn't walk through it. A clear step-by-step
-  with screenshots would remove the biggest friction point in the install flow.
-
 ### Medium Priority
 - **`neural_metrics.json` visualizer** — the sleep cycle now snapshots neuron/synapse
   counts after every run. A simple chart in `showcase/` that reads that file and
