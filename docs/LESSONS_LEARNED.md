@@ -210,7 +210,106 @@ When something breaks and you don't know where:
 
 ---
 
-## [2026-03-05] Dual SENTINEL instances cause gateway crash loop
+## [2026-03-05] coherence_monitor score_drift fall-through causes false positives and BOOT_CONTEXT bloat
+
+### Symptom
+Adam's response latency increases noticeably. Sentinel log shows drift detected and
+re-anchor fired every 5 minutes even in active, coherent sessions:
+```
+[2026-03-05 16:38:56] Coherence check: exit 1
+[2026-03-05 16:38:56] DRIFT DETECTED - consuming re-anchor...
+[2026-03-05 16:43:57] Coherence check: exit 1
+[2026-03-05 16:43:57] DRIFT DETECTED - consuming re-anchor...
+```
+BOOT_CONTEXT.md grows every 5 minutes. Running `coherence_monitor.py` directly
+shows `Scratchpad in last 10 turns: True` alongside `Drift score: 0.9` — a
+contradiction. Scratchpad active + maximum drift score = bug in the scorer.
+
+### Root Cause
+`score_drift()` used a chain of independent `if` statements rather than `if/elif/else`.
+The function had four explicit branches but no coverage for `scratchpad_present=True`
+with `CONTEXT_DRIFT_THRESHOLD <= context_pct < CONTEXT_WARN_THRESHOLD` (40–65%).
+
+When context depth crossed 40%, all four `if` conditions evaluated to `False`:
+- `scratchpad_present and context_pct < 0.40` → False (context too high)
+- `scratchpad_present and context_pct >= 0.65` → False (context not high enough)
+- `not scratchpad_present and ...` → False (scratchpad IS present)
+
+With all branches missed, execution fell through to the final `return 0.9` catch-all
+(intended for "scratchpad absent + high context"). Every session at 40%+ context with
+an active scratchpad scored as maximum drift — the opposite of reality.
+
+`should_reanchor()` also checked `context_pct >= CONTEXT_WARN_THRESHOLD` as an
+independent trigger, meaning deep context alone could fire re-anchor even when the
+scratchpad was firing correctly.
+
+### Cascade
+False positive drift (exit 1) every 5 minutes → SENTINEL appends re-anchor block
+(~200 tokens) to BOOT_CONTEXT.md → file grows from ~21KB to ~23KB → Adam loads
+larger context on every message → response latency increases → eventually gateway
+timeouts produce `stopReason: "error"` turns with `usage.input: 0` → coherence
+monitor reads zero tokens as further evidence of drift → loop continues.
+
+### Fix
+Replaced chained `if` statements with exhaustive `if/elif/else` on the
+`scratchpad_present` branch:
+
+```python
+# BEFORE (broken — fall-through to catch-all)
+if scratchpad_present and context_pct < CONTEXT_DRIFT_THRESHOLD:
+    return 0.0
+if scratchpad_present and context_pct >= CONTEXT_WARN_THRESHOLD:
+    return 0.4
+if not scratchpad_present and context_pct < CONTEXT_DRIFT_THRESHOLD:
+    return 0.3
+...
+return 0.9  # ← was hit for scratchpad_present=True, 40-65% context
+
+# AFTER (exhaustive — no fall-through possible)
+if scratchpad_present:
+    if context_pct < CONTEXT_DRIFT_THRESHOLD:   return 0.0
+    elif context_pct < CONTEXT_WARN_THRESHOLD:  return 0.2  # new branch
+    else:                                        return 0.4
+else:
+    if context_pct < CONTEXT_DRIFT_THRESHOLD:   return 0.3
+    elif context_pct < CONTEXT_WARN_THRESHOLD:  return 0.6
+    else:                                        return 0.9
+```
+
+`should_reanchor()` simplified to `return drift_score >= 0.6` — context depth alone
+never triggers re-anchor when the scratchpad is firing.
+
+### Recovery Steps
+1. Apply fix to `tools/coherence_monitor.py`
+2. Clear any pending re-anchor: open `workspace/reanchor_pending.json`, set `consumed: true`
+3. Recompile BOOT_CONTEXT.md cleanly (run SENTINEL boot or manually execute the
+   compile block from `SENTINEL.ps1`)
+4. Verify: `python tools/coherence_monitor.py` should return exit 0 with
+   `Drift score: 0.2` (not 0.9) for a healthy mid-context session
+
+### How To Detect This Class of Error
+If coherence monitor fires exit 1 repeatedly but logs show `Scratchpad... True`:
+```powershell
+python tools\coherence_monitor.py
+# If output shows "Scratchpad in last 10 turns: True" AND "Drift score: 0.9"
+# that's a scorer bug, not real drift.
+```
+Check BOOT_CONTEXT.md line count — more than ~480 lines means re-anchor blocks
+have been appended. Recompile it.
+
+### Key Insight
+> **A scoring function with independent `if` branches instead of `if/elif/else`
+> will silently fall through to a catch-all when input falls in an unhandled range.
+> Always verify scoring functions with exhaustive unit tests covering every branch,
+> including boundary values.**
+
+The missing test was `score_drift(True, 0.50)` — scratchpad present, mid-context.
+That exact case is now in `test_coherence_monitor.py` as `test_scratchpad_present_mid_context`
+and `test_no_fallthrough_exhaustive`. Test count: 27 → 30.
+
+---
+
+
 
 ### Symptom
 Gateway dies every 30-60 seconds. SENTINEL watchdog catches it and immediately

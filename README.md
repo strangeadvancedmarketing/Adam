@@ -191,7 +191,7 @@ Validated in production, not a lab:
 | Time from zero terminal knowledge to production app | 18 days |
 | Time to solve AI amnesia | 30 days |
 | Time to solve within-session coherence degradation | 35 days |
-| Layer 5 coherence monitor test coverage | 27/27 passing against live data |
+| Layer 5 coherence monitor test coverage | 30/30 passing against live data |
 
 > **Neural graph numbers are live — updated every night by the sleep cycle.**
 > Each reconcile run snapshots current neuron/synapse counts to `workspace/neural_metrics.json`.

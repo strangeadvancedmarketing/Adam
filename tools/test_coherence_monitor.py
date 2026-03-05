@@ -238,6 +238,10 @@ class TestDriftScoring(unittest.TestCase):
     def test_coherent_low_context(self):
         self.assertEqual(cm.score_drift(True, 0.2), 0.0)
 
+    def test_scratchpad_present_mid_context(self):
+        """THE BUG CASE: scratchpad present, context 40-65%. Must NOT fall through to 0.9."""
+        self.assertEqual(cm.score_drift(True, 0.50), 0.2)
+
     def test_scratchpad_absent_low_context(self):
         self.assertEqual(cm.score_drift(False, 0.2), 0.3)
 
@@ -250,15 +254,34 @@ class TestDriftScoring(unittest.TestCase):
     def test_drift_confirmed(self):
         self.assertEqual(cm.score_drift(False, 0.70), 0.9)
 
+    def test_no_fallthrough_exhaustive(self):
+        """All 6 branches return expected scores with no fall-through to catch-all."""
+        cases = [
+            (True,  0.10, 0.0),   # scratchpad present, low context
+            (True,  0.50, 0.2),   # scratchpad present, mid context — was the bug case
+            (True,  0.70, 0.4),   # scratchpad present, high context
+            (False, 0.10, 0.3),   # scratchpad absent, low context
+            (False, 0.50, 0.6),   # scratchpad absent, mid context
+            (False, 0.70, 0.9),   # scratchpad absent, high context
+        ]
+        for present, pct, expected in cases:
+            with self.subTest(scratchpad=present, context=pct):
+                self.assertEqual(cm.score_drift(present, pct), expected)
+
     def test_reanchor_triggered_at_06(self):
         self.assertTrue(cm.should_reanchor(0.6, 0.50))
 
     def test_reanchor_not_triggered_at_03(self):
         self.assertFalse(cm.should_reanchor(0.3, 0.20))
 
-    def test_reanchor_triggered_by_context_alone(self):
-        """High context should trigger re-anchor even if scratchpad present."""
-        self.assertTrue(cm.should_reanchor(0.4, 0.70))
+    def test_reanchor_not_triggered_by_context_alone(self):
+        """Scratchpad present + high context = healthy pressure, NOT re-anchor."""
+        self.assertFalse(cm.should_reanchor(0.4, 0.70))
+
+    def test_reanchor_only_on_dropout(self):
+        """Re-anchor fires only when scratchpad dropout score >= 0.6."""
+        self.assertFalse(cm.should_reanchor(0.2, 0.99))  # deep context, scratchpad firing
+        self.assertTrue(cm.should_reanchor(0.6, 0.01))   # early session, dropout detected
 
 
 class TestBaselineAndLog(unittest.TestCase):

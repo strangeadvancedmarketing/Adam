@@ -4,7 +4,49 @@ All notable changes to the Adam Framework are documented here.
 
 ---
 
+## [v1.0.10] — 2026-03-05
+
+### Fixed
+
+#### `coherence_monitor.py` — score_drift fall-through causing production false positives
+
+**Root cause:** `score_drift()` used chained independent `if` statements. No branch
+covered `scratchpad_present=True` with `40% <= context_pct < 65%`. All four conditions
+evaluated False and execution fell through to the final `return 0.9` catch-all —
+maximum drift score — even with the scratchpad actively firing.
+
+**Impact:** Every session above 40% context depth permanently scored as critical drift.
+SENTINEL fired re-anchor injections every 5 minutes. BOOT_CONTEXT.md grew from ~21KB
+to ~23KB (536 lines) with 5 appended re-anchor blocks, increasing Adam's response
+latency and eventually producing gateway timeout errors.
+
+**Fix:** Replaced chained `if` with exhaustive `if/elif/else` on `scratchpad_present`.
+Added the missing branch: `scratchpad_present=True, mid-context → 0.2` (healthy pressure,
+no action). Simplified `should_reanchor()` to fire only on dropout signals
+(`drift_score >= 0.6`) — context depth alone no longer triggers re-anchor when
+the scratchpad is active.
+
+**Recovery applied:** BOOT_CONTEXT.md recompiled clean. Pending false-positive
+re-anchor cleared. Next coherence check: exit 0, drift score 0.2.
+
+#### `test_coherence_monitor.py` — test suite updated to cover the bug case
+
+Added 3 new tests covering the exact failure mode and regression prevention:
+- `test_scratchpad_present_mid_context` — the bug case: `score_drift(True, 0.50) == 0.2`
+- `test_no_fallthrough_exhaustive` — all 6 scoring branches verified in one subTest loop
+- `test_reanchor_not_triggered_by_context_alone` — replaces the now-incorrect
+  `test_reanchor_triggered_by_context_alone` (old behavior was wrong)
+- `test_reanchor_only_on_dropout` — verifies deep context with active scratchpad
+  never fires re-anchor
+
+**Test count: 27 → 30. All passing.**
+
+See `docs/LESSONS_LEARNED.md` for full root cause, cascade, and recovery steps.
+
+---
+
 ## [v1.0.9] — 2026-03-05
+
 
 ### 🚨 BREAKTHROUGH: Layer 5 — Within-Session Coherence Degradation Solved
 
@@ -37,7 +79,7 @@ zero instrumentation overhead — the system's own defined behavior is the detec
   - All tests run against real live OpenClaw session data before touching production
   - Covers: session file discovery, JSONL parsing, scratchpad detection, drift
     scoring, baseline lifecycle, coherence log rotation, re-anchor trigger format
-  - **27/27 passing** — zero failures against live data before implementation
+  - **27/27 passing** — zero failures against live data before first implementation
 
 - `vault-templates/coherence_baseline.template.json` — session baseline schema
 - `vault-templates/coherence_log.template.json` — event log schema

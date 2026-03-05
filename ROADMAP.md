@@ -234,7 +234,7 @@ a re-anchor payload to `reanchor_pending.json`. SENTINEL consumes it and injects
 content directly into `BOOT_CONTEXT.md` — Adam sees it on the next context load.
 
 **What was proven today:**
-- 27/27 tests passing against live session data before a single line touched production
+- 30/30 tests passing against live session data before a single line touched production
 - All 13 failure modes from the design review resolved (JSONL parsing, token estimation,
   session file targeting, lock contention, baseline reset, log rotation)
 - First coherence check ran at 16:30 — exit 0, session coherent
