@@ -156,6 +156,54 @@ Not scoped yet. Ideas worth tracking.
 
 ---
 
+## Problem Two — Within-Session Coherence Degradation 🔬
+
+The Adam Framework solved AI Amnesia: the identity and memory collapse that happens
+*between* sessions. That's shipped, production-validated, and documented with receipts.
+
+There is a second problem. It was the defining failure mode that created Layer 4.
+
+**The problem:** As a session accumulates context, the model's reasoning consistency,
+identity coherence, and decision quality degrade — quietly, before compaction triggers,
+while the conversation is still nominally "working." The model doesn't announce this.
+It just starts drifting. Priorities blur. Earlier decisions get quietly contradicted.
+The persona established at boot begins to soften. By the time compaction fires, damage
+is already done.
+
+This is **within-session coherence degradation**. It is distinct from AI Amnesia
+(between-session memory loss) and it is currently unsolved.
+
+**What Layer 4 actually is:** The compaction flush is a *defensive* mitigation. When
+context exhaustion is imminent, the AI writes what matters to the Vault before it's
+lost. This recovers continuity *after* degradation. It does not prevent degradation
+from happening.
+
+**What the next layer looks like:** A proactive coherence monitor — a system that
+establishes a baseline from the Vault at session start, tracks drift signals mid-session,
+and intervenes before the flush is needed. Not reactive cleanup. Active maintenance.
+
+The same architectural properties that made AI Amnesia solvable here make this
+solvable here:
+- **Local and file-based** — the Vault provides the coherence baseline. It's already
+  there. Every session starts by reading it.
+- **Model-agnostic** — coherence monitoring doesn't require retraining anything.
+  It's an orchestration layer, same as SENTINEL.
+- **Human-readable** — drift detection can be logged, inspected, and corrected by
+  the operator. No black box.
+
+**Current state:** Layer 4 is the floor. The compaction flush works and is in
+production. The proactive layer is not yet designed or built — this is an open
+research direction, not a scoped feature.
+
+**Why this matters beyond this repo:** Within-session coherence degradation affects
+every long-context AI deployment. The reason most production AI systems cap session
+length, force resets, or require human check-ins at intervals is precisely this
+problem — it just isn't named clearly or addressed architecturally. The Adam Framework
+is positioned to attack it with the same approach that solved AI Amnesia: local,
+file-based, model-agnostic, built in production by someone who needed it to work.
+
+---
+
 ## What Will Never Be In This Roadmap
 
 - Cloud dependencies or hosted services — this framework runs locally, period
