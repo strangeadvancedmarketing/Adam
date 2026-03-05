@@ -33,6 +33,9 @@ kokoro_*.log
 .openclaw/
 !.openclaw/openclaw.json   # This is intentional — only commit the template, not the live version
 
+# Build scripts (not part of the public repo)
+gen_og.py
+
 # Python cache
 __pycache__/
 *.pyc
