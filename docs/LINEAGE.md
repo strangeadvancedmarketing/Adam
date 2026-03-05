@@ -213,7 +213,7 @@ It's not a product. It's not a research paper. It's not a demo.
 It's a production system that has been running real business operations for 8 months,
 built incrementally by someone who needed it to work and kept fixing it until it did.
 
-The four layers exist because each one solved a specific failure mode that appeared in
+The five layers exist because each one solved a specific failure mode that appeared in
 production. The SENTINEL design exists because the gateway kept dying. The date injection
 exists because the AI kept getting dates wrong. The neural graph exists because the Vault
 was getting too large to load in full. The compaction flush exists because work done in

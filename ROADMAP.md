@@ -50,8 +50,8 @@ Work in active progress or immediately next.
   visible to anyone who visits the repo.
 
 ### Windows Task Scheduler setup guide
-- 📋 Step-by-step SENTINEL registration with screenshots. Biggest friction point
-  in the current install flow. Eliminates the last manual step.
+- ✅ Step-by-step SENTINEL registration documented in `SETUP_HUMAN.md` Phase 1 Step 5.
+  `Register-ScheduledTask` command block included with all required parameters.
 
 ### `reconcile_memory.py` test coverage
 - 📋 pytest suite covering state management, backup logic, LLM validation, and

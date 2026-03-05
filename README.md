@@ -66,7 +66,7 @@ The sleep cycle has merged weeks of daily logs into your core memory file. Your 
 └──────────────────────────────────────────────────────┘
 ```
 
-All four layers run simultaneously. The memory is in the files. The model is just the reader — swap the LLM, keep the Vault, your AI's continuity persists.
+All five layers run simultaneously. The memory is in the files. The model is just the reader — swap the LLM, keep the Vault, your AI's continuity persists.
 
 ---
 
@@ -97,7 +97,7 @@ adam-framework/
 │   ├── coherence_monitor.py       ← Layer 5: scratchpad dropout detector + re-anchor
 │   └── test_coherence_monitor.py  ← 30-test suite, validated against live session data
 ├── docs/
-│   ├── ARCHITECTURE.md            ← Deep dive on all 4 layers
+│   ├── ARCHITECTURE.md            ← Deep dive on all 5 layers
 │   ├── CONFIG_REFERENCE.md        ← Every config field explained
 │   ├── PROOF.md                   ← The 353-session proof of work
 │   ├── SETUP.md                   ← Detailed setup guide (30-min walkthrough)
