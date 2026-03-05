@@ -85,33 +85,57 @@ significantly more accessible to the Obsidian community (large, technical, align
 
 ## Voice Layer Upgrade — NVIDIA PersonaPlex 💡
 
-Worth tracking closely. Not ready to integrate yet, but the trajectory is clear.
+Worth tracking closely. Not ready to integrate yet — two hard prerequisites are
+missing. Fully researched and documented here so the integration can be executed
+the moment both are available.
 
 **What it is:** PersonaPlex is a full-duplex speech-to-speech model from NVIDIA — it
 listens and speaks simultaneously, handles interruptions naturally, and accepts persona
-control via a text prompt. That text prompt maps directly to SOUL.md. Released January
-2026, MIT code license, NVIDIA Open Model license for weights.
+control via a text prompt. Released January 2026, MIT code license, NVIDIA Open Model
+license for weights. The text prompt persona control maps directly to SOUL.md — no
+architectural changes needed on the Adam side.
 
-**Why it's relevant:** The current voice layer (Kokoro TTS) is one-way — text in,
-speech out. PersonaPlex would replace that with a real-time conversational voice
-interface where Adam listens while speaking, handles barge-ins, and maintains persona
-throughout. The persona-via-text-prompt architecture is a direct fit for how SOUL.md
-already works.
+**Why it's relevant:** The current voice layer (Edge TTS) is one-way — text in,
+speech out, generic voice. PersonaPlex would replace that with a real-time
+conversational interface where Adam listens while speaking, handles barge-ins, stays
+in character, and responds in a consistent trained voice. The persona prompt is just
+SOUL.md content passed at initialization.
 
-**Current state:**
-- Full model (7B): ~14-16GB VRAM — too heavy to run alongside Kimi K2.5 on most setups
-- Community Q4_K GGUF quantization exists at `Codes4Fun/personaplex-7b-v1-q4_k-GGUF`
-  on HuggingFace — cuts VRAM requirement roughly in half (~6-7GB)
-- Official `--cpu-offload` flag exists for GPU-constrained setups
-- Open feature request in OpenClaw repo (#15392) for native PersonaPlex integration
-- Key limitation: PersonaPlex handles voice only, not tool use — still requires a
-  separate LLM (Kimi K2.5 or similar) for the intelligence layer
+**The two hard blockers today (March 2026):**
+- **No hosted API.** PersonaPlex is weights-only — local deployment only. It is not
+  available at `integrate.api.nvidia.com` or any other hosted endpoint. For setups
+  where Kimi K2.5 runs as a remote API call (no local discrete GPU), there is
+  currently nothing to point a `baseUrl` at.
+- **No OpenClaw native support.** The OpenClaw integration is an open feature request
+  (#15392), not a shipped feature. The plumbing doesn't exist yet.
+- **Local deployment requires NVIDIA discrete GPU + CUDA.** Not viable on integrated
+  graphics setups regardless of quantization.
 
-**Integration path when ready:**
-PersonaPlex runs its own server at `localhost:8998`. The architecture would be:
-Telegram/mic input → PersonaPlex (voice layer, persona from SOUL.md) → Kimi K2.5
-(tool use, memory, reasoning) → PersonaPlex (spoken response). SENTINEL would manage
-both processes.
+**Community quantization (for discrete GPU setups):**
+A Q4_K GGUF version exists at `Codes4Fun/personaplex-7b-v1-q4_k-GGUF` on HuggingFace
+— roughly half the VRAM of the full 7B model. An `--cpu-offload` flag exists but
+real-time audio streaming on CPU alone produces unusable latency.
+
+**Integration path when both blockers are resolved:**
+The architecture for a remote-API setup is clean — no hardware changes required:
+
+```
+Voice message → OpenClaw
+  → PersonaPlex API (persona from SOUL.md text prompt, voice output)
+  → Kimi K2.5 API (tool use, memory, Vault — unchanged)
+  → PersonaPlex API (speaks Kimi's response in Adam's voice)
+  → Audio back to Telegram
+```
+
+For the openclaw.json config, the swap is surgical — replace the current Edge TTS
+`provider` block with a PersonaPlex endpoint, same pattern as the existing NVIDIA
+provider block. SENTINEL manages nothing new; PersonaPlex runs as a hosted service.
+
+**Watch for:**
+- PersonaPlex appearing at `integrate.api.nvidia.com` (NVIDIA's pattern with open
+  models is to follow weights release with hosted API — Kimi K2.5 is the proof)
+- Native PersonaPlex support merged into OpenClaw mainline
+- Either of these makes this a same-day integration
 
 **Watch for:** Official OpenClaw PersonaPlex integration, further community
 quantizations, and NVIDIA's promised production-focused architecture optimized for
