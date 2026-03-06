@@ -6,7 +6,7 @@
 
 ![Adam Framework](og-image.png)
 
-**[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The full story](docs/LINEAGE.md)** · **[→ Community showcase](SHOWCASE.md)**
+**[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The origin story](docs/LINEAGE.md)** · **[→ The full 8-month arc](docs/LINEAGE_EXTENDED.md)** · **[→ Community showcase](SHOWCASE.md)**
 
 ---
 
@@ -105,7 +105,8 @@ adam-framework/
 │   ├── SWARM.md                   ← Multi-agent coordination via shared Vault
 │   ├── SKILLS_SYSTEM.md           ← Pluggable capability layer (documentation-first plugins)
 │   ├── LESSONS_LEARNED.md         ← Production failure log: symptoms, root causes, fixes
-│   └── LINEAGE.md                 ← How this was built: the uncut origin story
+│   ├── LINEAGE.md                 ← How this was built: the uncut origin story
+│   └── LINEAGE_EXTENDED.md        ← The full 8-month arc: all three AIs, cross-referenced
 └── showcase/
     └── ai-amnesia-solved.html     ← Interactive data visualization
 ```
@@ -198,7 +199,7 @@ Validated in production, not a lab:
 | System rebuilds survived | 2 (including one full nuclear reset, February 14–16, 2026) |
 | Identity preserved through all of it | ✓ |
 | Time from zero terminal knowledge to production app | 18 days |
-| Time to solve AI amnesia | 30 days |
+| Time to solve AI amnesia (from first Layer 1 implementation) | 30 days |
 | Time to solve within-session coherence degradation | 35 days |
 | Layer 5 coherence monitor test coverage | 33/33 passing against live data |
 
