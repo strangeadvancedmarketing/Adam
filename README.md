@@ -1,16 +1,37 @@
 # The Adam Framework
 ### AI Amnesia — Solved. Within-Session Coherence Degradation — Solved.
 
-> "Every time you start a new session, your AI forgets everything.  
-> This framework fixes that."
+<p align="center">
+  <a href="https://strangeadvancedmarketing.github.io/Adam/"><img src="https://img.shields.io/badge/🌐%20Live%20Site-Visit%20Now-gold?style=for-the-badge" alt="Live Site"></a>
+  <a href="https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html"><img src="https://img.shields.io/badge/📊%20Interactive%20Proof-353%20Sessions-blue?style=for-the-badge" alt="Interactive Proof"></a>
+  <a href="docs/LINEAGE_EXTENDED.md"><img src="https://img.shields.io/badge/📖%20The%20Story-8%20Months-green?style=for-the-badge" alt="The Story"></a>
+  <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge" alt="MIT License">
+</p>
 
-![Adam Framework](og-image.png)
+<p align="center">
+  <strong>Built by one non-coder. Running a live business. On consumer hardware. No CS degree required.</strong>
+</p>
 
-**[→ Landing page](https://strangeadvancedmarketing.github.io/Adam/)** · **[→ Interactive proof](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)** · **[→ The origin story](docs/LINEAGE.md)** · **[→ The full 8-month arc](docs/LINEAGE_EXTENDED.md)** · **[→ Community showcase](SHOWCASE.md)**
+---
+
+> **New here? Start with the [live site](https://strangeadvancedmarketing.github.io/Adam/) — it explains everything without a single line of code.**
+> 
+> **Want to see the proof first?** → [Interactive data visualization — 353 sessions rendered as charts](https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html)
+>
+> **Want the full story?** → [8 months, 3 AIs, one nuclear reset](docs/LINEAGE_EXTENDED.md)
+
+---
+
+> *"Every time you start a new session, your AI forgets everything.  
+> This framework fixes that."*
 
 ---
 
 ## What This Is
+
+> **You don't need to be a developer to use this.** The person who built it isn't one either.
+> If you have OpenClaw running and a model talking to you, you're already at the starting line.
+> The two setup guides — one for humans, one to hand to your AI — take 30–60 minutes total.
 
 The Adam Framework is a **5-layer persistent memory and coherence architecture** for local AI assistants built on [OpenClaw](https://openclaw.ai). It was developed over 8 months, across 353 sessions and 6,619 message turns, by a non-coder running a live business on consumer hardware.
 
@@ -144,13 +165,16 @@ For the full visual proof — 353 sessions of data rendered as charts: **[Intera
 
 ## Two Ways to Set This Up
 
-### Path 1 — You do it (30–60 min)
+**Not a developer? That's fine — neither is the person who built this.**
+Pick whichever path sounds less scary:
 
-Read **[SETUP_HUMAN.md](SETUP_HUMAN.md)**. It's written for humans, starting from "you have OpenClaw running." Four phases: identity, neural memory, Session 000 history seeding, sleep cycle. Fully step-by-step.
+### Path 1 — You do it yourself (30–60 min)
 
-### Path 2 — Your AI does it for you
+Read **[SETUP_HUMAN.md](SETUP_HUMAN.md)**. Written in plain English. No assumptions about your technical background. Four phases: identity files, neural memory, history seeding, sleep cycle. Every step has an expected output so you know it worked.
 
-If you're already talking to an AI assistant, give it **[SETUP_AI.md](SETUP_AI.md)**. It's written for AI agents — terse, sequential, command-first, with explicit success conditions at each step. Your AI reads it, asks you 8 questions, and installs everything. No model assumptions — works with any LLM.
+### Path 2 — Let your AI handle it
+
+If you're already talking to an AI assistant, paste **[SETUP_AI.md](SETUP_AI.md)** into the conversation. It asks you 8 questions and does the install. No terminal knowledge required from you.
 
 ---
 
