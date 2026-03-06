@@ -67,7 +67,7 @@ High-value contributions that need someone to pick them up.
 `SENTINEL.template.ps1` is PowerShell-only. A bash equivalent covering the same
 boot sequence — date injection, sleep cycle, BOOT_CONTEXT compilation, gateway
 launch, watchdog loop — would open this framework to the majority of developers.
-**This is the single highest-value contribution the project needs.**
+**✅ SHIPPED — `engine/SENTINEL.template.sh` + `tools/ingest_triples.sh` + `engine/com.adamframework.sentinel.plist`**
 
 ### Additional model provider templates
 `openclaw.template.json` is wired for NVIDIA. Config blocks for OpenRouter, Groq,
