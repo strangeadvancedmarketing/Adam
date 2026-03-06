@@ -26,7 +26,7 @@ This framework changes that. By the end of this guide:
 |-------|-----------|----------------|
 | **Vault** | A folder of plain Markdown files | Your AI's long-term memory lives here |
 | **Identity Files** | SOUL.md + CORE_MEMORY.md | The AI reads these at every boot |
-| **SENTINEL** | A watchdog PowerShell script | Starts your AI automatically, keeps it alive, runs coherence checks |
+| **SENTINEL** | A watchdog script (PowerShell on Windows, bash on macOS/Linux) | Starts your AI automatically, keeps it alive, runs coherence checks |
 | **Neural Graph** | A local associative memory database | Builds connections between concepts over time |
 | **Session 000** | Your full chat history ingested as facts | Your AI wakes up already knowing your history |
 | **Sleep Cycle** | Nightly Gemini-powered consolidation | Daily logs merged into core memory while you sleep |
@@ -39,10 +39,11 @@ This framework changes that. By the end of this guide:
 Before starting, confirm you have:
 
 - [ ] **OpenClaw** installed and a model responding when you chat
-- [ ] **Python 3.10+** — `python --version` in PowerShell
+- [ ] **Python 3.10+** — `python --version` in your terminal
 - [ ] **mcporter** — `npm install -g mcporter`
 - [ ] **Git** (optional but recommended) — for cloning and version tracking
 - [ ] **A Gemini API key** (free) — for the sleep cycle. Get one at [aistudio.google.com](https://aistudio.google.com/app/apikey)
+- [ ] **macOS/Linux only:** `jq` installed — `brew install jq` (macOS) or `sudo apt install jq` (Linux)
 
 **What is mcporter?** It's the MCP server router that wires external tools into OpenClaw — neural memory, search, Notion, etc. Install it once, configure it, and OpenClaw gains those capabilities.
 
@@ -121,18 +122,20 @@ If your openclaw.json has a `memoryFlush` or compaction prompt, update any hardc
 
 SENTINEL is the watchdog that starts your AI on login, writes the authoritative date, compiles boot context from your identity files, and keeps the gateway alive if it crashes.
 
-Copy the template to your OpenClaw directory:
+Copy the template for your platform:
 
+**Windows:**
 ```powershell
 copy engine\SENTINEL.template.ps1 "$env:USERPROFILE\.openclaw\SENTINEL.ps1"
 ```
+Open `SENTINEL.ps1` and set `$VAULT_PATH = "C:\MyAIVault"`
 
-Open `SENTINEL.ps1` and update the variables at the top:
-
-```powershell
-$VAULT_PATH  = "C:\MyAIVault"   # ← your actual Vault path
-$PYTHON_EXE  = "python"         # override if python isn't in your PATH
+**macOS/Linux:**
+```bash
+cp engine/SENTINEL.template.sh ~/.openclaw/SENTINEL.sh
+chmod +x ~/.openclaw/SENTINEL.sh
 ```
+Open `SENTINEL.sh` and set `VAULT_PATH="$HOME/MyAIVault"`
 
 Run it manually to test:
 
@@ -158,22 +161,28 @@ You should see:
 
 So it runs automatically every time you log in:
 
+**Windows (Task Scheduler):**
 ```powershell
 $action = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
     -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$env:USERPROFILE\.openclaw\SENTINEL.ps1`""
-
 $trigger = New-ScheduledTaskTrigger -AtLogOn
-
-Register-ScheduledTask `
-    -TaskName "AISentinel" `
-    -Action $action `
-    -Trigger $trigger `
-    -RunLevel Highest `
-    -Force
+Register-ScheduledTask -TaskName "AISentinel" -Action $action -Trigger $trigger -RunLevel Highest -Force
 ```
 
-After this: every login, SENTINEL starts silently. Your AI is always ready. Check `$env:USERPROFILE\.openclaw\sentinel.log` to confirm it ran.
+**macOS (launchd):**
+```bash
+cp engine/com.adamframework.sentinel.plist ~/Library/LaunchAgents/
+# Edit plist: replace YOUR_USERNAME and YOUR_VAULT_PATH
+launchctl load ~/Library/LaunchAgents/com.adamframework.sentinel.plist
+```
+
+**Linux (cron):**
+```bash
+(crontab -l 2>/dev/null; echo "@reboot /bin/bash ~/.openclaw/SENTINEL.sh >> ~/.openclaw/sentinel.log 2>&1") | crontab -
+```
+
+After this: every login, SENTINEL starts silently. Your AI is always ready. Check `~/.openclaw/sentinel.log` to confirm it ran.
 
 ---
 
@@ -267,18 +276,25 @@ You can delete any entries that look wrong. The file is plain JSON — each fact
 
 Once you've reviewed the extracted facts:
 
+**Windows:**
 ```powershell
 .\tools\ingest_triples.ps1 -VaultPath "C:\MyAIVault"
 ```
 
+**macOS/Linux:**
+```bash
+bash tools/ingest_triples.sh --vault-path ~/MyAIVault
+```
+
 **Options:**
-- `-DryRun` — shows what would be ingested without actually running (test first)
-- `-StartAt 150` — resume from a specific fact number if the run was interrupted
+- Windows: `-DryRun` / macOS+Linux: `--dry-run` — preview without ingesting
+- Windows: `-StartAt 150` / macOS+Linux: `--start-at 150` — resume if interrupted
 
 **Do a dry run first:**
-```powershell
-.\tools\ingest_triples.ps1 -VaultPath "C:\MyAIVault" -DryRun
-```
+
+**Windows:** `.\tools\ingest_triples.ps1 -VaultPath "C:\MyAIVault" -DryRun`
+
+**macOS/Linux:** `bash tools/ingest_triples.sh --vault-path ~/MyAIVault --dry-run`
 
 Then run for real. Estimated time: ~56 minutes for 740 facts. **You can use your AI normally while this runs in the background.** Don't close the PowerShell window until it finishes.
 
@@ -297,17 +313,19 @@ Session 000 complete. Your AI already knows you.
 
 SENTINEL looks for the sleep cycle and coherence monitor scripts inside your Vault at runtime. You need to copy them there:
 
+**Windows:**
 ```powershell
 Copy-Item -Recurse "tools" "C:\MyAIVault\tools"
 ```
 
-Verify:
-```powershell
-Test-Path "C:\MyAIVault\tools\reconcile_memory.py"
-Test-Path "C:\MyAIVault\tools\coherence_monitor.py"
+**macOS/Linux:**
+```bash
+cp -r tools ~/MyAIVault/tools
 ```
 
-Both should return `True`. If either returns `False`, SENTINEL will silently skip that component on every boot — no error, just a log line saying "not found - skipping."
+Verify both files exist:
+- `YOUR_VAULT/tools/reconcile_memory.py`
+- `YOUR_VAULT/tools/coherence_monitor.py` If either returns `False`, SENTINEL will silently skip that component on every boot — no error, just a log line saying "not found - skipping."
 
 ### Step 11: Add Your Gemini API Key
 
