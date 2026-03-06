@@ -25,7 +25,7 @@ That problem had to be solved. So it was.
 
 ---
 
-## The Beginning: ClawdBot (December 2025)
+## The Beginning: ClawdBot (Late January / Early February 2026)
 
 The first version had a name but no architecture.
 
@@ -41,7 +41,7 @@ answer, as deployed at the time, was no.
 
 ---
 
-## Layer 1: The Files (January 2026)
+## Layer 1: The Files (Early February 2026)
 
 The first insight was almost embarrassingly simple.
 
@@ -61,7 +61,7 @@ was built on top of.
 
 ---
 
-## The Compaction Problem (Late January 2026)
+## The Compaction Problem (Mid-February 2026)
 
 Layer 1 worked until sessions got long.
 

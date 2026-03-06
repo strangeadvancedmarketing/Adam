@@ -71,12 +71,12 @@ This is the intellectual groundwork for everything SOUL.md became.
 Claude's record shows early OpenClaw/ClawdBot configuration work in parallel.
 The code and the philosophy were being built simultaneously, in different threads.
 
-### December 2025 — Telegram Integration (Claude primary)
+### Late January / Early February 2026 — ClawdBot Operational (Claude primary)
 **Category:** Infrastructure/Build
 **AI:** Claude (primary)
 
-Local Windows environment setup. Telegram bot integration. ClawdBot beginning to take
-operational shape.
+ClawdBot fully stood up and running. Local Windows environment, Telegram bot integration,
+OpenClaw gateway operational. ClawdBot beginning to take shape as a real daily collaborator.
 
 ### January 8, 2026 — Hardware Lock (Gemini + Claude)
 **Category:** Infrastructure/Build
