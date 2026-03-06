@@ -46,20 +46,24 @@ and load that instead.**
 
 ## How BOOT_CONTEXT.md Is Compiled
 
-SENTINEL runs this at every gateway start, before the gateway launches:
+SENTINEL runs this at every gateway start, before the gateway launches.
 
+**Windows (PowerShell):**
 ```powershell
-# Read long-term cortex files
 $coreMemory    = Get-Content "$VAULT_PATH\CORE_MEMORY.md" -Raw
 $activeContext = Get-Content "$VAULT_PATH\workspace\active-context.md" -Raw
-
-# Compile hippocampus
-$bootPayload  = "# BOOT CONTEXT — Compiled by SENTINEL`n"
-$bootPayload += "> Auto-generated. Do not edit manually.`n`n"
-$bootPayload += "## Core Memory`n`n" + $coreMemory
-$bootPayload += "`n`n## Active Context`n`n" + $activeContext
-
+$bootPayload   = "# BOOT CONTEXT — Compiled by SENTINEL`n> Auto-generated. Do not edit manually.`n`n## Core Memory`n`n" + $coreMemory
+$bootPayload  += "`n`n## Active Context`n`n" + $activeContext
 Set-Content -Path "$VAULT_PATH\workspace\BOOT_CONTEXT.md" -Value $bootPayload
+```
+
+**macOS/Linux (bash — same logic, same output):**
+```bash
+{ printf '# BOOT CONTEXT — Compiled by SENTINEL\n> Auto-generated. Do not edit manually.\n\n## Core Memory\n\n'
+  cat "$VAULT_PATH/CORE_MEMORY.md"
+  printf '\n\n## Active Context\n\n'
+  cat "$VAULT_PATH/workspace/active-context.md"
+} > "$VAULT_PATH/workspace/BOOT_CONTEXT.md"
 ```
 
 OpenClaw then injects BOOT_CONTEXT.md as part of its memory search context. The AI
@@ -151,18 +155,23 @@ The default compilation is: CORE_MEMORY.md + active-context.md.
 
 You can extend it by adding more files to the SENTINEL compilation block:
 
+**Windows:**
 ```powershell
-# Add any files that should always be present at session start
-$soulContext   = Get-Content "$VAULT_PATH\SOUL.md" -Raw
-$recentLog     = Get-Content "$VAULT_PATH\workspace\memory\$(Get-Date -Format 'yyyy-MM-dd').md" -Raw -ErrorAction SilentlyContinue
+$soulContext  = Get-Content "$VAULT_PATH\SOUL.md" -Raw
+$recentLog    = Get-Content "$VAULT_PATH\workspace\memory\$(Get-Date -Format 'yyyy-MM-dd').md" -Raw -ErrorAction SilentlyContinue
+$bootPayload  = "# BOOT CONTEXT`n`n## Identity`n`n" + $soulContext + "`n`n## Core Memory`n`n" + $coreMemory + "`n`n## Active Context`n`n" + $activeContext
+if ($recentLog) { $bootPayload += "`n`n## Today's Log`n`n" + $recentLog }
+Set-Content -Path "$VAULT_PATH\workspace\BOOT_CONTEXT.md" -Value $bootPayload
+```
 
-$bootPayload  = "# BOOT CONTEXT`n`n"
-$bootPayload += "## Identity`n`n" + $soulContext + "`n`n"
-$bootPayload += "## Core Memory`n`n" + $coreMemory + "`n`n"
-$bootPayload += "## Active Context`n`n" + $activeContext
-if ($recentLog) {
-    $bootPayload += "`n`n## Today's Log`n`n" + $recentLog
-}
+**macOS/Linux:**
+```bash
+{ printf '# BOOT CONTEXT\n\n## Identity\n\n'; cat "$VAULT_PATH/SOUL.md"
+  printf '\n\n## Core Memory\n\n'; cat "$VAULT_PATH/CORE_MEMORY.md"
+  printf '\n\n## Active Context\n\n'; cat "$VAULT_PATH/workspace/active-context.md"
+  TODAY=$(date +%Y-%m-%d)
+  [[ -f "$VAULT_PATH/workspace/memory/$TODAY.md" ]] && { printf '\n\n## Today Log\n\n'; cat "$VAULT_PATH/workspace/memory/$TODAY.md"; }
+} > "$VAULT_PATH/workspace/BOOT_CONTEXT.md"
 ```
 
 The rule: **if the AI needs it to be functional from word one, compile it in.
