@@ -9,10 +9,7 @@ to work and kept fixing it until it did. Contributions that come from the same p
 ## What's Most Needed Right Now
 
 ### High Priority
-- **Linux / macOS port of SENTINEL** — `SENTINEL.template.ps1` is PowerShell-only.
-  A bash equivalent that covers the same boot sequence (date injection, sleep cycle,
-  BOOT_CONTEXT compilation, gateway launch, watchdog loop) would open this framework
-  to the majority of developers. This is the single highest-value contribution.
+- ✅ **~~Linux / macOS port of SENTINEL~~** — Shipped. `engine/SENTINEL.template.sh` (bash), `tools/ingest_triples.sh`, and `engine/com.adamframework.sentinel.plist` (macOS launchd) are all live. The framework runs on Windows, macOS, and Linux.
 
 - **Model provider templates** — `openclaw.template.json` is currently wired for NVIDIA.
   Templates or documented config blocks for OpenRouter, Groq, Ollama, and Anthropic
