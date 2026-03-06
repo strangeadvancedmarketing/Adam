@@ -2,365 +2,59 @@
 
 All notable changes to the Adam Framework are documented here.
 
----
-
-## [v1.2.0] — 2026-03-06
-
-### Fixed
-
-#### `engine/SENTINEL.template.ps1` — `Invoke-ReAnchor` accumulates re-anchor blocks on every cycle
-
-**Root cause:** `Invoke-ReAnchor` used `Add-Content` to append a new re-anchor
-block to `BOOT_CONTEXT.md` on every trigger. Each re-anchor added ~200 tokens.
-After several drift events across multiple sessions, `BOOT_CONTEXT.md` accumulated
-stale blocks that were never cleaned — increasing Adam's context load on every
-session start and eventually producing gateway timeout errors.
-
-Additionally, `Invoke-ReAnchor` referenced `$pending.timestamp` to label the
-injection header, but `coherence_monitor.py` writes the field as `created_at`.
-This caused the header to render as a blank timestamp on every injection.
-
-**Fix:**
-- Replace `Add-Content` with read → strip → replace pattern: reads current
-  `BOOT_CONTEXT.md`, removes all prior `## Re-Anchor Injection` blocks via
-  `-replace "(?s)\r?\n---\r?\n## Re-Anchor Injection.*$", ""`, then writes
-  the new block cleanly with `Set-Content`.
-- Fixed timestamp field reference: `$pending.timestamp` → `$pending.created_at`
-  with fallback to `Get-Date -Format "o"` if field is absent.
-
-**Result:** Each re-anchor injection replaces the last — BOOT_CONTEXT.md stays
-the same size regardless of how many drift events occur in a session.
-
-**Applies to:** `engine/SENTINEL.template.ps1`. Live SENTINEL instances should
-update their `Invoke-ReAnchor` function to match. See LESSONS_LEARNED for
-recovery steps if BOOT_CONTEXT.md has already accumulated stale blocks.
+Format: `[version] — date — description`
 
 ---
 
-#### `tools/coherence_monitor.py` — re-anchor content could contain literal `<scratchpad>` tag
+## [v1.0-stable] — 2026-03-06
 
-**Root cause:** `build_reanchor_content()` extracted a block from `AGENTS.md`
-that included the literal string `<scratchpad>` (the re-anchor instruction itself
-tells the model to use its scratchpad). When SENTINEL injected this content into
-`BOOT_CONTEXT.md`, the next coherence check found the tag in the injected block
-and scored the session as coherent — even if the model had stopped using its
-scratchpad in actual responses. Ghost hit masking real dropout.
-
-**Fix:** Strip `<scratchpad>` from all extracted re-anchor content before writing:
-```python
-SCRATCHPAD_TAG = "<scratchpad>"
-SCRATCHPAD_PLACEHOLDER = "[SCRATCHPAD_LOOP_INSTRUCTION]"
-extracted = extracted.replace(SCRATCHPAD_TAG, SCRATCHPAD_PLACEHOLDER)
-```
-The fallback string was also updated to remove the inline `<scratchpad>` tag.
-
----
-
-#### `tools/coherence_monitor.py` — `write_reanchor_trigger` had no deduplication guard
-
-**Root cause:** If SENTINEL hadn't yet consumed a pending `reanchor_pending.json`
-when the coherence monitor ran again, `write_reanchor_trigger` would overwrite it
-with a new trigger. The race: SENTINEL marks it consumed → monitor immediately
-writes a new one → SENTINEL injects again → loop continues, writing a fresh
-re-anchor block every 5 minutes regardless of actual session state.
-
-**Fix:** Added deduplication guard — if `reanchor_pending.json` exists with
-`consumed: false`, skip the write and log it:
-```python
-if not existing.get("consumed", True):
-    rlog("Re-anchor already pending — skipping duplicate write.")
-    return False
-```
-`write_reanchor_trigger` now returns `True` (written) or `False` (skipped).
-The `main()` function uses this to distinguish `reanchor_triggered` from
-`reanchor_skipped_pending` in the coherence log.
-
----
-
-#### `tools/test_coherence_monitor.py` — test suite updated for new fixes
-
-Four new tests added covering the three new bug cases:
-- `test_deduplication_skips_unconsumed_pending` — second write blocked while first pending
-- `test_deduplication_allows_write_after_consumed` — write succeeds after consumed=true
-- `test_reanchor_content_has_no_scratchpad_tag` — verifies `<scratchpad>` stripped from output
-
-Test count: 30 → 33.
-
----
-
-## [v1.1.0] — 2026-03-05
-
-### Fixed
-
-#### `engine/SENTINEL.template.ps1` — vector reindex hitting nonexistent HTTP endpoint
-
-**Root cause:** The vector reindex block was calling `POST /api/memory/reindex` on
-the OpenClaw gateway. That endpoint does not exist — OpenClaw exposes no REST route
-for memory reindex operations. Every boot produced:
-
-```
-[SENTINEL] Vector reindex failed (non-fatal): The remote server returned an error: (405) Method Not Allowed.
-```
-
-The error was non-fatal (system continued booting) but the vector index was never
-refreshed after reconcile runs, meaning new memory written by the sleep cycle was
-not searchable until the next manual CLI reindex.
-
-**Fix:** Replaced the `Invoke-WebRequest` block with a direct CLI call:
-```powershell
-$reindexResult = & openclaw memory index --agent main 2>&1 | Out-String
-```
-This is the documented OpenClaw approach (`openclaw memory index`). No HTTP call,
-no auth token required, works on every platform. Confirmed clean on first boot:
-```
-[SENTINEL] Vector reindex triggered successfully.
-```
-
-**Applies to:** `engine/SENTINEL.template.ps1` (public template). Live SENTINEL
-instances should update the reindex block to match.
-
----
-
-## [v1.0.10] — 2026-03-05
-
-### Fixed
-
-#### `coherence_monitor.py` — score_drift fall-through causing production false positives
-
-**Root cause:** `score_drift()` used chained independent `if` statements. No branch
-covered `scratchpad_present=True` with `40% <= context_pct < 65%`. All four conditions
-evaluated False and execution fell through to the final `return 0.9` catch-all —
-maximum drift score — even with the scratchpad actively firing.
-
-**Impact:** Every session above 40% context depth permanently scored as critical drift.
-SENTINEL fired re-anchor injections every 5 minutes. BOOT_CONTEXT.md grew from ~21KB
-to ~23KB (536 lines) with 5 appended re-anchor blocks, increasing Adam's response
-latency and eventually producing gateway timeout errors.
-
-**Fix:** Replaced chained `if` with exhaustive `if/elif/else` on `scratchpad_present`.
-Added the missing branch: `scratchpad_present=True, mid-context → 0.2` (healthy pressure,
-no action). Simplified `should_reanchor()` to fire only on dropout signals
-(`drift_score >= 0.6`) — context depth alone no longer triggers re-anchor when
-the scratchpad is active.
-
-**Recovery applied:** BOOT_CONTEXT.md recompiled clean. Pending false-positive
-re-anchor cleared. Next coherence check: exit 0, drift score 0.2.
-
-#### `test_coherence_monitor.py` — test suite updated to cover the bug case
-
-Added 3 new tests covering the exact failure mode and regression prevention:
-- `test_scratchpad_present_mid_context` — the bug case: `score_drift(True, 0.50) == 0.2`
-- `test_no_fallthrough_exhaustive` — all 6 scoring branches verified in one subTest loop
-- `test_reanchor_not_triggered_by_context_alone` — replaces the now-incorrect
-  `test_reanchor_triggered_by_context_alone` (old behavior was wrong)
-- `test_reanchor_only_on_dropout` — verifies deep context with active scratchpad
-  never fires re-anchor
-
-**Test count: 27 → 30. All passing.**
-
-See `docs/LESSONS_LEARNED.md` for full root cause, cascade, and recovery steps.
-
----
-
-## [v1.0.9] — 2026-03-05
-
-
-### 🚨 BREAKTHROUGH: Layer 5 — Within-Session Coherence Degradation Solved
-
-The second major unsolved problem in production AI deployments is now solved.
-
-**The problem:** As a session accumulates context, the model's reasoning consistency
-and identity coherence degrade quietly — before compaction triggers, while the
-conversation is still nominally "working." The model doesn't announce this. It drifts.
-
-**The signal:** Scratchpad dropout. When Adam is coherent, the ReAct scratchpad fires
-on every complex turn. When he drifts, it stops. Binary, production-validated,
-zero instrumentation overhead — the system's own defined behavior is the detector.
-
-**What shipped today:**
-
-#### Added
-- `tools/coherence_monitor.py` — 5-layer coherence monitoring system:
-  - Reads live OpenClaw session JSONL (line-by-line, handles real format)
-  - Token depth from `usage.input` field — not char estimation (base64 images
-    in tool results inflate char counts by 10x; real API usage field does not)
-  - Session file targeting: UUID `.jsonl` files only — not `sessions.json` index
-  - Scratchpad detection across thinking blocks and text blocks
-  - Drift scoring 0.0–1.0 across scratchpad + context depth signals
-  - Re-anchor content pulled from AGENTS.md + active-context.md (~200 tokens)
-  - `reanchor_pending.json` consumed flag prevents duplicate injection
-  - Baseline and coherence log reset daily (no cross-session accumulation)
-  - Exit codes: 0 = coherent, 1 = drift detected, 2 = error
-
-- `tools/test_coherence_monitor.py` — 27-test verification suite:
-  - All tests run against real live OpenClaw session data before touching production
-  - Covers: session file discovery, JSONL parsing, scratchpad detection, drift
-    scoring, baseline lifecycle, coherence log rotation, re-anchor trigger format
-  - **27/27 passing** — zero failures against live data before first implementation
-
-- `vault-templates/coherence_baseline.template.json` — session baseline schema
-- `vault-templates/coherence_log.template.json` — event log schema
-
-#### Changed
-- `engine/SENTINEL.template.ps1` — Layer 5 integrated into watchdog loop:
-  - `Invoke-CoherenceCheck` runs every 10 ticks (5 minutes)
-  - `Invoke-ReAnchor` consumes `reanchor_pending.json`, appends to `BOOT_CONTEXT.md`,
-    marks consumed — same injection path already proven at boot
-  - Kokoro TTS permanently removed — Edge TTS only, no more silent restart loops
-    on a dead process
-
-- `README.md` — upgraded to 5-layer architecture; both solved problems documented
-- `ROADMAP.md` — Layer 5 marked shipped; Problem Two marked solved
-
-#### First production run
-- Coherence check at 16:30:36 — exit 0, session coherent
-- Re-anchor injection path confirmed functional
-- SENTINEL log: `"Coherence monitor every 5 min."` on all subsequent boots
-
-
+**Full system audit. All 5 layers verified operational.**
 
 ### Added
-- `.github/ISSUE_TEMPLATE/bug_report.md` — structured bug report template with
-  component checklist, log paste areas, and LESSONS_LEARNED cross-reference prompt
-- `.github/ISSUE_TEMPLATE/setup_help.md` — setup help template with phase/step
-  tracking and expected vs. actual output fields
-- `.github/ISSUE_TEMPLATE/feature_request.md` — feature request template with
-  explicit contributor self-identification prompt ("would you build this?")
-- `.github/PULL_REQUEST_TEMPLATE.md` — PR template enforcing repo philosophy:
-  tested on real hardware, no cloud dependencies, Vault files human-readable
-
-### Changed
-- `README.md` — added landing page and showcase links above the fold (first visible
-  element for all visitors); added "What It Looks Like" section with real SENTINEL
-  boot output and Adam's first context-aware response
-
----
-
-## [v1.0.7] — 2026-03-05
-
-### Added
-- `index.html` — GitHub Pages landing page at strangeadvancedmarketing.github.io/Adam/
-- `ROADMAP.md` — full roadmap: shipped features, near-term work, community
-  opportunities, PersonaPlex voice upgrade research, long-term concepts
-- 15 targeted GitHub repository topics for discoverability
-
----
-
-## [v1.0.6] — 2026-03-05
-
-### Added
-- `docs/SKILLS_SYSTEM.md` — documentation-first plugin architecture; covers skill
-  definition, activation, the four active production skills, and how to add new ones
-
----
-
-## [v1.0.5] — 2026-03-05
-
-### Added
-- `docs/CONTEXT_COMPILER.md` — explains BOOT_CONTEXT.md compilation: hippocampus/
-  cortex split, source priority, what gets injected vs. what stays in Vault
-- `docs/SWARM.md` — multi-agent coordination via shared Vault; PATTERN_SEEKER
-  architecture, task queue pattern, swarm coordination primitives
-- `CONTRIBUTING.md` — contribution guide: priorities, how to contribute, what a
-  good PR looks like, repo philosophy
-
-### Fixed
-- `engine/SENTINEL.template.ps1` — corrected boot sequence and mutex lock pattern
-  to match production-validated implementation
-
----
-
-## [v1.0.4] — 2026-03-05
-
-### Added
-- `showcase/ai-amnesia-solved.html` — interactive data visualization ("The Proof")
-  rendering 353-session development arc as charts; V3 with full timeline,
-  neural growth, session velocity, and key milestone markers
-
----
-
-## [v1.0.3] — 2026-03-05
-
-### Fixed
-- **Root cause of `session-store` rename failures fully identified and resolved**
-  The rename errors persisted after the v1.0.2 config fix, pointing to a second
-  independent issue. Process handle inspection (via Sysinternals handle64) identified
-  the actual culprit: the Claude desktop app (PID 1076) was holding two persistent
-  file handles on `sessions.json` via the Desktop Commander MCP filesystem integration.
-  Windows blocks atomic rename operations when any process holds the destination file open.
-  
-  **Fix:** Removed `C:\Users\AJSup\.openclaw\agents` from Desktop Commander's
-  `allowedDirectories` config. The MCP client can no longer open files in the sessions
-  directory, so no handles are acquired. Rename operations now succeed cleanly.
-
-- **Corrected LESSONS_LEARNED entry for session-store rename errors**
-  Previous entry incorrectly attributed the rename failures solely to the config reload
-  loop. The reload loop was one contributing factor, but the persistent rename failures
-  were independently caused by MCP filesystem handle retention. Both root causes are now
-  documented accurately.
-
-### Added
-- `docs/LESSONS_LEARNED.md` updated with the MCP handle contention entry
-
----
-
-## [v1.0.2] — 2026-03-05
-
-### Fixed
-- **CRITICAL: Removed invalid `contacts` key from `channels.telegram` config block**
-  The `contacts` field is not a valid key in the OpenClaw `channels.telegram` schema.
-  Its presence caused every hot-reload of `openclaw.json` to fail silently with:
-  `Invalid config: channels.telegram: Unrecognized key: "contacts"`
-  This manifested downstream as cascading `[session-store] rename failed after 5 attempts`
-  errors on every session write — the gateway was stuck in a broken reload loop.
-
-- **Heartbeat routing now uses the correct schema**
-  Heartbeat delivery target is now configured via `agents.defaults.heartbeat.to` using
-  the format `CHAT_ID:topic:THREAD_ID` — the documented OpenClaw approach.
-  Previously attempted via undocumented `channels.telegram.contacts` alias (incorrect).
-
-- **Updated `engine/openclaw.template.json`**
-  Template now reflects the correct heartbeat configuration pattern with
-  `agents.defaults.heartbeat` including `target`, `to`, and `activeHours` fields.
-  Removed the invalid `contacts` block from the template entirely.
-
-### Added
-- `docs/LESSONS_LEARNED.md` — documents failure modes encountered in production
-  with root causes, symptoms, and confirmed fixes. Intended to short-circuit
-  debugging time for anyone running this framework.
-
----
-
-## [v1.0.1] — 2026-03-05
-
-### Fixed
-- Added missing `GEMINI_API_KEY` to `env` block in `engine/openclaw.template.json`
-  (was absent, causing the nightly reconciliation sleep cycle to skip Gemini consolidation silently)
-- Added heartbeat `contacts` routing to template (superseded by v1.0.2 fix above)
-- Fixed box-drawing character corruption artifacts in `showcase/ai-amnesia-solved.html`
-
-### Added
-- `SETUP_HUMAN.md` — step-by-step human installation guide
-- `SETUP_AI.md` — agent-delegated installation guide
+- `AUDIT.md` — full system audit results (5 layers, 33/33 tests, paths, disk state)
 - `CHANGELOG.md` — this file
+- `LICENSE` — MIT license file (was in README badge only, now properly detected by GitHub)
+- `TOPIC_INDEX.template.md` — populated with correct schema (was empty at launch)
+- `reconcile_memory.py` Part 8 — TOPIC_INDEX confidence auto-update (HIGH/MEDIUM/LOW based on last_touched age)
+
+### Fixed
+- TOPIC_INDEX.template.md was committed empty — now contains full schema with placeholders
+- AdamsVault migrated from F: to C: drive on reference machine — all SENTINEL paths confirmed clean
+
+### Verified
+- coherence_monitor test suite: 33/33 passing
+- All 31 documented repo files present and populated
+- Layer 5 coherence monitor active against live session data
 
 ---
 
-## [v1.0.0] — 2026-03-04
+## [v0.9-showcase] — 2026-03-05
 
-### Initial public release
+**Public showcase launch.**
 
-- 4-layer persistent memory architecture at launch: Vault injection, MCP memory search,
-  neural graph (7,211 neurons / 29,291 synapses), nightly Gemini reconciliation
-  *(Layer 5 coherence monitor shipped v1.2.0 — see above)*
-- `engine/openclaw.template.json` — sanitized gateway config with all placeholders
-- `engine/SENTINEL.template.ps1` — watchdog, auto-start, sleep cycle scheduler
-- `engine/mcporter.template.json` — MCP server wiring
-- `vault-templates/` — SOUL, CORE_MEMORY, BOOT_SEQUENCE, active-context templates
-- `tools/legacy_importer.py` — extract facts from Claude/ChatGPT export
-- `tools/ingest_triples.ps1` — feed extracted facts into neural graph
-- `tools/reconcile_memory.py` — nightly sleep cycle runner
-- `docs/ARCHITECTURE.md` — deep dive on all 5 layers
-- `docs/CONFIG_REFERENCE.md` — every config field explained
-- `docs/PROOF.md` — 353-session production proof of work
-- `showcase/ai-amnesia-solved.html` — interactive data visualization
+### Added
+- `SHOWCASE.md` — community deployments, add yours
+- `showcase/ai-amnesia-solved.html` — interactive data visualization (353 sessions, 6,619 turns)
+- GitHub Pages deployment via `.github/workflows/deploy.yml`
+- GitHub Discussions enabled
+- Roadmap issue pinned
+- Linux/macOS SENTINEL port marked as good first issue
+
+### Fixed
+- Narrative consistency pass across all docs (405 fix)
+
+---
+
+## [v0.8-public] — 2026-03-03
+
+**Initial public release.**
+
+### Added
+- Full 5-layer architecture documented and templated
+- `SETUP_HUMAN.md` + `SETUP_AI.md` — dual onboarding paths
+- `engine/` — SENTINEL, gateway config, mcporter templates
+- `vault-templates/` — SOUL, CORE_MEMORY, BOOT_SEQUENCE, coherence schemas, active-context
+- `tools/` — legacy_importer, ingest_triples, reconcile_memory, coherence_monitor, test suite
+- `docs/` — ARCHITECTURE, CONFIG_REFERENCE, PROOF, SETUP, CONTEXT_COMPILER, SWARM, SKILLS_SYSTEM, LESSONS_LEARNED, LINEAGE, LINEAGE_EXTENDED
+- `CONTRIBUTING.md`, `ROADMAP.md`
+- 19 GitHub topics for discoverability

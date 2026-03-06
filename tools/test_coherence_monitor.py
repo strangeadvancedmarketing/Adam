@@ -90,6 +90,7 @@ import coherence_monitor as cm
 
 # ── TEST CASES ────────────────────────────────────────────────────────────────
 
+@unittest.skipUnless(os.path.exists(LIVE_SESSIONS), "Skipped: live sessions directory not present (CI environment)")
 class TestSessionFileDiscovery(unittest.TestCase):
     """Verify the live session finder works against the real sessions directory."""
 
@@ -121,6 +122,7 @@ class TestSessionFileDiscovery(unittest.TestCase):
             self.assertNotIn(".reset.", result)
 
 
+@unittest.skipUnless(os.path.exists(TEST_SESSION), "Skipped: live session file not present (CI environment)")
 class TestJsonlParsing(unittest.TestCase):
     """Verify JSONL parser handles real session format correctly."""
 

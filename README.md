@@ -2,6 +2,7 @@
 ### AI Amnesia — Solved. Within-Session Coherence Degradation — Solved.
 
 <p align="center">
+  <a href="https://github.com/strangeadvancedmarketing/Adam/actions/workflows/tests.yml"><img src="https://github.com/strangeadvancedmarketing/Adam/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <a href="https://strangeadvancedmarketing.github.io/Adam/"><img src="https://img.shields.io/badge/🌐%20Live%20Site-Visit%20Now-gold?style=for-the-badge" alt="Live Site"></a>
   <a href="https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html"><img src="https://img.shields.io/badge/📊%20Interactive%20Proof-353%20Sessions-blue?style=for-the-badge" alt="Interactive Proof"></a>
   <a href="docs/LINEAGE_EXTENDED.md"><img src="https://img.shields.io/badge/📖%20The%20Story-8%20Months-green?style=for-the-badge" alt="The Story"></a>
