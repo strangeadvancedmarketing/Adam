@@ -10,7 +10,7 @@
 
 Not a researcher. Not a developer. Not someone with a GPU cluster or a team.
 
-A small business owner in Miami running a turf supply company, a pet sales operation,
+A small business owner in Miami running a turf supply company, a 3D printing business,
 and a marketing agency — using AI the way most people actually use it: to get real work
 done, every day, across dozens of ongoing threads.
 
