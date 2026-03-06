@@ -106,7 +106,7 @@ This is not:
 - A research prototype that's never been used in production
 - Dependent on any specific AI model
 
-It's a local architecture pattern that works with any OpenAI-compatible model, runs on consumer hardware, and has been tested under real production conditions for 8 months.
+It's a local architecture pattern that works with any OpenAI-compatible model, runs on consumer hardware, and was built and tested over 8 months — with Adam running real production workloads from day one of his creation.
 
 ---
 

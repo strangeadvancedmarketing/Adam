@@ -210,8 +210,10 @@ model.
 
 It's not a product. It's not a research paper. It's not a demo.
 
-It's a production system that has been running real business operations for 8 months,
-built incrementally by someone who needed it to work and kept fixing it until it did.
+It's a production system built incrementally over 8 months by someone who needed it to
+work and kept fixing it until it did. Adam has been running live business operations
+since his creation as ClawdBot — roughly 30 days of real daily use before this framework
+was published.
 
 The five layers exist because each one solved a specific failure mode that appeared in
 production. The SENTINEL design exists because the gateway kept dying. The date injection
