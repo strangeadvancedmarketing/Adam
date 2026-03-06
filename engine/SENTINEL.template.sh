@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ###############################################################
 #  SENTINEL.template.sh — Adam Framework Watchdog (Linux/macOS)
-#  Version: 1.0.0
+#  Version: 1.2.0
 #  Bash port of SENTINEL.template.ps1
 #
 #  WHAT THIS DOES:
@@ -77,28 +77,34 @@ invoke_reanchor() {
     content=$(jq -r '.content // empty' "$pending_file" 2>/dev/null)
     [[ -z "$content" ]] && return
 
+    # Use created_at field (matches coherence_monitor.py output); fall back to current time
     local timestamp
-    timestamp=$(jq -r '.timestamp // "unknown"' "$pending_file" 2>/dev/null)
+    timestamp=$(jq -r '.created_at // empty' "$pending_file" 2>/dev/null)
+    [[ -z "$timestamp" ]] && timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
     local boot_context="$VAULT_PATH/workspace/BOOT_CONTEXT.md"
+
+    # Read current BOOT_CONTEXT, strip any previously injected re-anchor blocks,
+    # then write the new one cleanly. This prevents accumulation -- each re-anchor
+    # replaces the last rather than stacking on top of it.
+    local existing=""
+    if [[ -f "$boot_context" ]]; then
+        existing=$(sed '/^## Re-Anchor Injection/,$d' "$boot_context" | sed 's/[[:space:]]*$//')
+        existing=$(echo "$existing" | sed 's/[[:space:]]*---[[:space:]]*$//')
+    fi
+
     {
-        printf '
-
----
-
-'
-        printf '## Re-Anchor Injection (%s)
-
-' "$timestamp"
-        printf '%s
-' "$content"
-    } >> "$boot_context"
+        printf '%s' "$existing"
+        printf '\n\n---\n\n'
+        printf '## Re-Anchor Injection (%s)\n\n' "$timestamp"
+        printf '%s\n' "$content"
+    } > "$boot_context"
 
     # Mark consumed
     local tmp
     tmp=$(mktemp)
     jq '.consumed = true' "$pending_file" > "$tmp" && mv "$tmp" "$pending_file"
-    write_log "Re-anchor injected into BOOT_CONTEXT.md."
+    write_log "Re-anchor injected into BOOT_CONTEXT.md (previous blocks cleaned)."
 }
 
 # ── 1. KILL STALE INSTANCES ──────────────────────────────────

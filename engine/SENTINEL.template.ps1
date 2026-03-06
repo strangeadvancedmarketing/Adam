@@ -21,7 +21,7 @@
 #  REQUIREMENTS:
 #    - Windows PowerShell 5.1+
 #    - OpenClaw installed
-#    - Python 3.10+ (if using Kokoro TTS)
+#    - Python 3.10+ (required for coherence_monitor.py and reconcile_memory.py)
 ###############################################################
 
 # ── CONFIGURE THESE FOR YOUR SYSTEM ─────────────────────────
