@@ -29,7 +29,7 @@ The Adam Framework was built by one person — running a small business in Miami
 | Model migrations survived | 4 (Anthropic → NVIDIA → Groq → OpenRouter → back) |
 | System rebuilds survived | 2 (including one complete nuclear reset) |
 | Identity preserved through all of it | Yes |
-| Layer 5 coherence monitor test coverage | 30/30 passing against live data |
+| Layer 5 coherence monitor test coverage | 33/33 passing against live data |
 | Problems solved | 2 (AI Amnesia + within-session coherence degradation) |
 
 ---
@@ -73,7 +73,7 @@ This validated the architecture: **the files are the memory, not the model.**
 ### March 5, 2026 — Layer 5: Within-Session Coherence Degradation Solved
 The second fundamental problem was identified, named, instrumented, and solved in a single day.
 
-The scratchpad dropout finding — that within-session AI coherence has a binary, observable behavioral signal — led directly to `coherence_monitor.py`: 281 lines, 30/30 tests passing against live session data before a single line touched production, first coherence check confirming exit 0 (session coherent) at 16:30. SENTINEL now runs the check every 5 minutes. Re-anchor injection fires directly into BOOT_CONTEXT.md when drift is detected. Kokoro TTS permanently removed — Edge TTS only, zero silent restart loops.
+The scratchpad dropout finding — that within-session AI coherence has a binary, observable behavioral signal — led directly to `coherence_monitor.py`: 33 tests passing against live session data before a single line touched production, first coherence check confirming exit 0 (session coherent) at 16:30. SENTINEL now runs the check every 5 minutes. Re-anchor injection fires directly into BOOT_CONTEXT.md when drift is detected. v1.2.0 (March 6, 2026) fixed three post-ship bugs: `Invoke-ReAnchor` accumulation via `Add-Content`, scratchpad ghost hits from literal `<scratchpad>` tag in re-anchor payload, and re-anchor storm from missing dedup guard.
 
 Two problems. Both solved. Both in production. Both with receipts.
 

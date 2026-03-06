@@ -217,11 +217,14 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.openclaw\SENTINEL.ps
 You should see output like:
 ```
 [2026-03-03 10:00:01] Sentinel rising. Clearing stale processes...
+[2026-03-03 10:00:02] Sleep cycle: running reconcile_memory.py (offline — Markdown + neural only)...
+[2026-03-03 10:00:03] Sleep cycle complete.
 [2026-03-03 10:00:03] Date injected: 2026-03-03
 [2026-03-03 10:00:03] Compiling BOOT_CONTEXT.md...
 [2026-03-03 10:00:03] BOOT_CONTEXT.md compiled successfully.
 [2026-03-03 10:00:03] Launching OpenClaw Gateway...
 [2026-03-03 10:00:04] Gateway started - PID 12345
+[2026-03-03 10:00:04] Vector reindex triggered successfully.
 [2026-03-03 10:00:04] SENTINEL ACTIVE — Watchdog loop starting.
 ```
 
@@ -270,7 +273,34 @@ After this, SENTINEL starts automatically on every login. Check `~/.openclaw/sen
 
 ---
 
-## Step 10: Talk to Your AI
+## Step 10: Copy Tools to Your Vault
+
+SENTINEL looks for the sleep cycle and coherence monitor scripts inside your Vault at runtime. Copy them there now:
+
+**Windows:**
+```powershell
+Copy-Item -Recurse "tools" "C:\MyAIVault\tools"
+```
+
+**macOS/Linux:**
+```bash
+cp -r tools ~/MyAIVault/tools
+```
+
+Verify both are present:
+```powershell
+Test-Path "C:\MyAIVault\tools\reconcile_memory.py"   # Layer 4 — sleep cycle
+Test-Path "C:\MyAIVault\tools\coherence_monitor.py"  # Layer 5 — coherence monitor
+```
+
+Both should return `True`. If either is missing, SENTINEL logs a "not found — skipping" message and silently skips that component every boot.
+
+- `reconcile_memory.py` — the nightly sleep cycle. Merges daily logs into CORE_MEMORY.md via Gemini, updates neural graph. Needs a `GEMINI_API_KEY` in openclaw.json.
+- `coherence_monitor.py` — Layer 5. Runs every 5 minutes during active sessions. Detects scratchpad dropout as a signal for within-session coherence degradation. Fires re-anchor into BOOT_CONTEXT.md when drift detected. Without this, the AI can drift silently through long sessions with no correction.
+
+---
+
+## Step 11: Talk to Your AI
 
 Open a browser: `http://localhost:18789`
 
@@ -293,6 +323,7 @@ Over time, as you use it:
 - The **daily memory logs** accumulate in `workspace/memory/`
 - The **CORE_MEMORY.md** gets updated by the AI itself when project state changes
 - The **compaction flush** writes durable notes before any context truncation
+- The **coherence monitor** runs every 5 minutes — if the AI drifts within a long session, a re-anchor fires automatically
 
 After a few weeks of real use, the AI has genuine persistent context. The memory compounds. This is the solve for AI amnesia — not magic, just consistent architecture.
 
