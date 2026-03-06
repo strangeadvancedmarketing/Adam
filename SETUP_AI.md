@@ -15,7 +15,7 @@ You are about to install persistent memory architecture for yourself (or for ano
 
 **Model assumption:** None. This guide works regardless of what model you or OpenClaw is running.
 
-**Platform assumption:** Windows with PowerShell 5.1+. OpenClaw already installed and operational.
+**Platform assumption:** Windows (PowerShell 5.1+), macOS, or Linux. OpenClaw already installed and operational. Ask the user which OS they are on before starting — this determines which SENTINEL template and ingest script to use.
 
 **Ask the user these questions before starting. Do not proceed until you have all answers:**
 
@@ -117,14 +117,18 @@ No errors = valid. If this throws, the JSON is malformed — fix it before conti
 
 ### 1.6 Deploy and Configure SENTINEL
 
+**Windows:**
 ```powershell
 Copy-Item "engine\SENTINEL.template.ps1" "$env:USERPROFILE\.openclaw\SENTINEL.ps1"
 ```
+Set `$VAULT_PATH` to `{{VAULT_PATH}}` and `$PYTHON_EXE` to `"python"`
 
-Edit `$env:USERPROFILE\.openclaw\SENTINEL.ps1`:
-- Set `$VAULT_PATH` to `{{VAULT_PATH}}`
-- Set `$PYTHON_EXE` to `"python"` (or full path if python is not in PATH)
-- If user provided Telegram: no changes needed here; Telegram is configured in openclaw.json
+**macOS/Linux:**
+```bash
+cp engine/SENTINEL.template.sh ~/.openclaw/SENTINEL.sh
+chmod +x ~/.openclaw/SENTINEL.sh
+```
+Set `VAULT_PATH="{{VAULT_PATH}}"` and `PYTHON_EXE="python3"`
 
 **Test SENTINEL:**
 ```powershell
@@ -148,26 +152,27 @@ Stop SENTINEL after verifying (Ctrl+C) — you'll register it as a scheduled tas
 
 ### 1.7 Register SENTINEL as Scheduled Task
 
+**Windows:**
 ```powershell
-$action = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$env:USERPROFILE\.openclaw\SENTINEL.ps1`""
-
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$env:USERPROFILE\.openclaw\SENTINEL.ps1`""
 $trigger = New-ScheduledTaskTrigger -AtLogOn
-
-Register-ScheduledTask `
-    -TaskName "AISentinel" `
-    -Action $action `
-    -Trigger $trigger `
-    -RunLevel Highest `
-    -Force
+Register-ScheduledTask -TaskName "AISentinel" -Action $action -Trigger $trigger -RunLevel Highest -Force
 ```
+Success condition: `Get-ScheduledTask -TaskName "AISentinel" | Select-Object -ExpandProperty State` → `Ready`
 
-**Success condition:**
-```powershell
-Get-ScheduledTask -TaskName "AISentinel" | Select-Object -ExpandProperty State
+**macOS (launchd):**
+```bash
+cp engine/com.adamframework.sentinel.plist ~/Library/LaunchAgents/
+# Replace YOUR_USERNAME and YOUR_VAULT_PATH in the plist
+launchctl load ~/Library/LaunchAgents/com.adamframework.sentinel.plist
 ```
-Expected output: `Ready`
+Success condition: `launchctl list | grep sentinel` → shows the agent loaded
+
+**Linux (cron):**
+```bash
+(crontab -l 2>/dev/null; echo "@reboot /bin/bash ~/.openclaw/SENTINEL.sh >> ~/.openclaw/sentinel.log 2>&1") | crontab -
+```
+Success condition: `crontab -l | grep SENTINEL` → shows the entry
 
 **Phase 1 complete.** The AI has an identity. It knows its name, the user's name, and their current projects. Sessions now start with context.
 
@@ -264,17 +269,23 @@ If they want to review — pause and wait. If they want to proceed — continue 
 
 First, do a dry run to confirm the pipeline is working:
 
+**Windows dry run:**
 ```powershell
 .\tools\ingest_triples.ps1 -VaultPath "{{VAULT_PATH}}" -DryRun
+```
+
+**macOS/Linux dry run:**
+```bash
+bash tools/ingest_triples.sh --vault-path "{{VAULT_PATH}}" --dry-run
 ```
 
 **Success condition:** Dry run shows fact preview output without errors.
 
 Then run for real:
 
-```powershell
-.\tools\ingest_triples.ps1 -VaultPath "{{VAULT_PATH}}"
-```
+**Windows:** `.\tools\ingest_triples.ps1 -VaultPath "{{VAULT_PATH}}"`
+
+**macOS/Linux:** `bash tools/ingest_triples.sh --vault-path "{{VAULT_PATH}}"`
 
 Inform the user: "This will take approximately X minutes (estimated from the report). You can use your AI normally while it runs. Do not close this terminal."
 
