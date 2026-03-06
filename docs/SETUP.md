@@ -19,7 +19,9 @@ This takes about 30 minutes on a clean setup.
 
 ## Prerequisites
 
-- [ ] Windows 10 or 11 *(Linux/Mac: community port welcome — SENTINEL is the only Windows-specific piece)*
+- [ ] Windows 10/11, macOS, or Linux
+  - **Windows:** PowerShell 5.1+ (built-in)
+  - **macOS/Linux:** bash 4.0+, `jq` (`brew install jq` / `sudo apt install jq`), `curl`
 - [ ] OpenClaw already installed and running
 - [ ] [Python 3.10+](https://python.org) — needed for the neural memory MCP
 - [ ] [mcporter](https://www.npmjs.com/package/mcporter) installed
@@ -191,18 +193,20 @@ If this command hangs or errors, check that mcporter is installed (`mcporter --v
 
 ## Step 8: Configure and Test SENTINEL
 
-Copy the watchdog script:
+Copy the watchdog script for your platform:
 
+**Windows:**
 ```powershell
 copy engine\SENTINEL.template.ps1 "$env:USERPROFILE\.openclaw\SENTINEL.ps1"
 ```
+Open `SENTINEL.ps1` and update `$VAULT_PATH = "C:\MyAIVault"`
 
-Open `SENTINEL.ps1` and update the two variables at the top:
-
-```powershell
-$VAULT_PATH  = "C:\MyAIVault"    # ← your actual Vault path
-$USE_KOKORO  = $false            # leave false unless you install Kokoro TTS
+**macOS/Linux:**
+```bash
+cp engine/SENTINEL.template.sh ~/.openclaw/SENTINEL.sh
+chmod +x ~/.openclaw/SENTINEL.sh
 ```
+Open `SENTINEL.sh` and update `VAULT_PATH="$HOME/MyAIVault"`
 
 **Run it manually to test:**
 
@@ -230,8 +234,9 @@ If you see this, SENTINEL is working. Leave this window open — SENTINEL runs i
 
 ## Step 9: Register SENTINEL for Auto-Start
 
-So your AI starts automatically every time you log into Windows:
+So your AI starts automatically every time you log in:
 
+**Windows (Task Scheduler):**
 ```powershell
 $action = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
@@ -247,7 +252,21 @@ Register-ScheduledTask `
     -Force
 ```
 
-After this, SENTINEL starts hidden on every login. Check `$env:USERPROFILE\.openclaw\sentinel.log` to verify it ran.
+**macOS (launchd):**
+```bash
+cp engine/com.adamframework.sentinel.plist ~/Library/LaunchAgents/
+# Edit the plist: replace YOUR_USERNAME and YOUR_VAULT_PATH with real values
+launchctl load ~/Library/LaunchAgents/com.adamframework.sentinel.plist
+```
+
+**Linux (cron @reboot):**
+```bash
+crontab -e
+# Add this line:
+@reboot /bin/bash ~/.openclaw/SENTINEL.sh >> ~/.openclaw/sentinel.log 2>&1
+```
+
+After this, SENTINEL starts automatically on every login. Check `~/.openclaw/sentinel.log` (or `$env:USERPROFILE\.openclaw\sentinel.log` on Windows) to verify it ran.
 
 ---
 
