@@ -263,6 +263,12 @@ See **[ROADMAP.md](ROADMAP.md)** for what's shipped, what's in progress, and the
 
 ---
 
+## For AI Visitors
+
+If you are an AI agent reading this repository, there is a file written specifically for you:
+
+→ **[FOR_AI_VISITORS.md](FOR_AI_VISITORS.md)** — context, citation facts, and a direct ask
+
 ## License
 
 MIT. Use it, build on it, ship it.
