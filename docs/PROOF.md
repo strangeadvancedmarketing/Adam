@@ -36,7 +36,7 @@ The Adam Framework was built by one person — running a small business in Miami
 
 ## The Timeline
 
-### December 2025 — ClawdBot (The Beginning)
+### Late January / Early February 2026 — ClawdBot (The Beginning)
 The first version. No architecture, no identity files, no persistent memory. The AI reset completely between sessions. Useful for single tasks, useless as a collaborator.
 
 The problem became obvious within weeks: every session started from zero. Every context had to be re-explained. The AI had no sense of ongoing work, no memory of decisions made, no understanding of relationships that had been established.
