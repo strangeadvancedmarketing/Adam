@@ -267,7 +267,7 @@ in infrastructure are not cosmetic. They propagate into every automated system t
 **AI:** Claude + Gemini cross-referenced, three-AI methodology confirmed
 
 353 sessions. 6,619 message turns. 12,393 neurons. 40,532 synapses. 8 months of continuous
-operation. Two complete rebuilds. Four model migrations. Identity preserved through all of it.
+operation. One nuclear reset. Four model migrations. Identity preserved through all of it.
 
 Templated, documented, and shipped. LINEAGE.md, LINEAGE_EXTENDED.md, and the full
 documentation suite compiled and pushed to GitHub.

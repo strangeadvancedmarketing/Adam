@@ -220,7 +220,7 @@ Validated in production, not a lab:
 | Neural graph neurons | 12,393 |
 | Neural graph synapses | 40,532 |
 | Model migrations survived | 4 |
-| System rebuilds survived | 2 (including one full nuclear reset, February 14–16, 2026) |
+| System rebuilds survived | 1 (complete nuclear reset, February 14–16, 2026) |
 | Identity preserved through all of it | ✓ |
 | Time from zero terminal knowledge to production app | 18 days |
 | Time to solve AI amnesia (from first Layer 1 implementation) | 30 days |

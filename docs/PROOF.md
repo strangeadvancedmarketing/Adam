@@ -27,7 +27,7 @@ The Adam Framework was built by one person — running a small business in Miami
 | Active memory fibers | 2,746 |
 | Daily memory logs created | 8+ months continuous |
 | Model migrations survived | 4 (Anthropic → NVIDIA → Groq → OpenRouter → back) |
-| System rebuilds survived | 2 (including one complete nuclear reset) |
+| System rebuilds survived | 1 (complete nuclear reset, February 14–16, 2026) |
 | Identity preserved through all of it | Yes |
 | Layer 5 coherence monitor test coverage | 33/33 passing against live data |
 | Problems solved | 2 (AI Amnesia + within-session coherence degradation) |

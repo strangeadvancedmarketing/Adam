@@ -1,7 +1,7 @@
 # LINEAGE — How Adam Was Built
 
 > One person. No computer science degree. A small business in Miami.
-> 353 Claude sessions. 8 months. Two complete rebuilds.
+> 353 Claude sessions. 8 months. One nuclear reset.
 > This is the uncut version of how the Adam Framework came to exist.
 
 ---
@@ -192,7 +192,7 @@ every automated system that touches them. Make them robust from the start.
 ## Public Release (March 3, 2026)
 
 353 sessions. 6,619 message turns. 12,393 neurons. 40,532 synapses.
-8 months of continuous operation. Two complete rebuilds. Four model migrations.
+8 months of continuous operation. One nuclear reset. Four model migrations.
 Identity preserved through all of it.
 
 The framework was cleaned up, templated, and pushed to GitHub with full documentation:
