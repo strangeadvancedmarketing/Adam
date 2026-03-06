@@ -171,6 +171,8 @@ to the regular health check routine.
 
 ## General Debugging Checklist
 
+> **Platform note:** Commands below are PowerShell (Windows). On macOS/Linux, replace `Get-Content` with `cat`, `Select-String` with `grep`, and path separators with `/`.
+
 When something breaks and you don't know where:
 
 1. **Check the day's gateway log for config errors first:**
