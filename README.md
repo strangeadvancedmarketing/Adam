@@ -170,7 +170,9 @@ Your AI wakes up already knowing your history. Every decision, tool, project, an
 
 ## Prerequisites
 
-- Windows 10/11 *(SENTINEL.ps1 is PowerShell — Linux/Mac port is a community opportunity)*
+- Windows 10/11, macOS, or Linux
+  - Windows: `SENTINEL.template.ps1` (PowerShell)
+  - macOS/Linux: `SENTINEL.template.sh` (bash) + `com.adamframework.sentinel.plist` (launchd, macOS)
 - [OpenClaw](https://openclaw.ai) already installed and running
 - [Python 3.10+](https://python.org)
 - [mcporter](https://www.npmjs.com/package/mcporter): `npm install -g mcporter`
