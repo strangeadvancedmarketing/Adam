@@ -95,7 +95,7 @@ adam-framework/
 │   ├── ingest_triples.ps1         ← Step 2: Feed extracted facts into neural graph
 │   ├── reconcile_memory.py        ← Nightly sleep cycle (runs via SENTINEL)
 │   ├── coherence_monitor.py       ← Layer 5: scratchpad dropout detector + re-anchor
-│   └── test_coherence_monitor.py  ← 30-test suite, validated against live session data
+│   └── test_coherence_monitor.py  ← 33-test suite, validated against live session data
 ├── docs/
 │   ├── ARCHITECTURE.md            ← Deep dive on all 5 layers
 │   ├── CONFIG_REFERENCE.md        ← Every config field explained
@@ -118,11 +118,14 @@ This is what a successful SENTINEL boot looks like — the AI coming online with
 
 ```
 [2026-03-03 08:00:01] Sentinel rising. Clearing stale processes...
-[2026-03-03 08:00:02] Date injected: 2026-03-03
-[2026-03-03 08:00:02] Compiling BOOT_CONTEXT.md...
-[2026-03-03 08:00:03] BOOT_CONTEXT.md compiled (4 sources merged)
-[2026-03-03 08:00:04] Gateway started — PID 9421
-[2026-03-03 08:00:04] SENTINEL ACTIVE — Watchdog loop running.
+[2026-03-03 08:00:02] Sleep cycle: running reconcile_memory.py (offline — Markdown + neural only)...
+[2026-03-03 08:00:03] Sleep cycle complete.
+[2026-03-03 08:00:03] Date injected: 2026-03-03
+[2026-03-03 08:00:03] Compiling BOOT_CONTEXT.md...
+[2026-03-03 08:00:04] BOOT_CONTEXT.md compiled (4 sources merged)
+[2026-03-03 08:00:05] Gateway started — PID 9421
+[2026-03-03 08:00:05] Vector reindex triggered successfully.
+[2026-03-03 08:00:05] SENTINEL ACTIVE — Watchdog loop running.
 
 > Hey, good morning.
 
@@ -197,7 +200,7 @@ Validated in production, not a lab:
 | Time from zero terminal knowledge to production app | 18 days |
 | Time to solve AI amnesia | 30 days |
 | Time to solve within-session coherence degradation | 35 days |
-| Layer 5 coherence monitor test coverage | 30/30 passing against live data |
+| Layer 5 coherence monitor test coverage | 33/33 passing against live data |
 
 > **Neural graph numbers are live — updated every night by the sleep cycle.**
 > Each reconcile run snapshots current neuron/synapse counts to `workspace/neural_metrics.json`.
