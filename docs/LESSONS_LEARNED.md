@@ -6,6 +6,28 @@
 
 ---
 
+## Layer 5 — Within-Session Coherence Degradation (Shipped 2026-03-05)
+
+Layer 5 is the coherence monitor. It solves a problem distinct from AI amnesia: the AI
+*remembers* who it is across sessions (Layers 1–4), but within a single long session, its
+behavior can drift as its instructions get buried deep in the context window.
+
+**The signal:** Scratchpad dropout. The AI is required to execute a ReAct reasoning loop
+(`<scratchpad>...</scratchpad>`) before every complex action. When context depth increases,
+the instruction to use the scratchpad gets pushed far back in the window — attention
+weakens, and the AI stops using it. This is a binary, measurable signal.
+
+**The fix:** `coherence_monitor.py` runs inside SENTINEL's watchdog loop every 5 minutes.
+It checks the last 10 turns for scratchpad presence relative to context depth. If dropout
+is detected at the wrong depth threshold, it writes a `reanchor_pending.json` payload.
+`Invoke-ReAnchor` picks this up and injects a targeted re-anchor block into `BOOT_CONTEXT.md`
+before the next session compiles. The AI course-corrects on the next context load.
+
+**Shipped:** 33/33 tests passing against live session data. Three post-ship bugs found and
+fixed within 24 hours (accumulation bug, ghost hits, re-anchor storm) — all documented below.
+
+---
+
 ## [2026-03-06] SENTINEL `Invoke-ReAnchor` accumulates blocks in BOOT_CONTEXT.md
 
 ### Symptom
