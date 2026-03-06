@@ -6,6 +6,152 @@
 
 ---
 
+## [2026-03-06] SENTINEL `Invoke-ReAnchor` accumulates blocks in BOOT_CONTEXT.md
+
+### Symptom
+`BOOT_CONTEXT.md` grows by ~200 tokens after every re-anchor event and never
+shrinks back. Over multiple sessions, the file accumulates stacked re-anchor blocks:
+
+```
+## Re-Anchor Injection (2026-03-05T16:38:56)
+... content ...
+
+---
+
+## Re-Anchor Injection (2026-03-05T16:43:57)
+... content ...
+```
+
+Adam's response latency increases. Eventually gateway timeouts appear as
+`stopReason: "error"` turns. The coherence monitor reads these zero-input-token
+turns as further drift evidence, creating a compounding loop.
+
+### Root Cause
+`Invoke-ReAnchor` in `SENTINEL.template.ps1` (and live SENTINEL instances) used
+`Add-Content` to append the re-anchor section to `BOOT_CONTEXT.md`:
+```powershell
+Add-Content -Path $bootContext -Value $section -Encoding UTF8
+```
+`Add-Content` appends — it never removes old blocks. Every triggered re-anchor
+stacks on top of all previous ones. There was no cleanup mechanism.
+
+Additionally, the timestamp header referenced `$pending.timestamp` — a field that
+does not exist in `reanchor_pending.json`. The correct field is `created_at`.
+Every injection showed a blank timestamp in the header.
+
+### Fix Applied
+Replace `Add-Content` with read → strip → write pattern in `Invoke-ReAnchor`:
+```powershell
+$existing = Get-Content $bootContext -Raw -Encoding UTF8
+$existing = $existing -replace "(?s)\r?\n---\r?\n## Re-Anchor Injection.*$", ""
+$existing = $existing.TrimEnd()
+$timestamp = if ($pending.created_at) { $pending.created_at } else { (Get-Date -Format "o") }
+$section   = "`n`n---`n`n## Re-Anchor Injection ($timestamp)`n`n$($pending.content)"
+Set-Content -Path $bootContext -Value ($existing + $section) -Encoding UTF8
+```
+
+The `-replace` regex strips everything from the first `## Re-Anchor Injection`
+header to end-of-file, then writes the new block cleanly. Result: one re-anchor
+block maximum at any time, regardless of how many events fire in a session.
+
+### Recovery Steps
+If `BOOT_CONTEXT.md` has already accumulated stale blocks:
+1. Run SENTINEL boot — the compile step rewrites `BOOT_CONTEXT.md` from scratch
+2. Or manually: open `BOOT_CONTEXT.md`, delete all `## Re-Anchor Injection` sections
+3. Verify with line count: healthy `BOOT_CONTEXT.md` should be ~350-500 lines
+
+### Key Insight
+> **`Add-Content` in a watchdog loop is always accumulation.** Any file that gets
+> written repeatedly by a watchdog needs either a rewrite (`Set-Content`) or a
+> strip-then-rewrite pattern. Never append-only to files that should stay bounded.
+
+---
+
+## [2026-03-06] Re-anchor content containing `<scratchpad>` causes ghost coherence hits
+
+### Symptom
+Coherence monitor reports `Scratchpad in last 10 turns: True` even in sessions
+where the model has clearly stopped using its scratchpad. Re-anchors don't fire
+when they should. The session drifts silently.
+
+Alternatively: scratchpad check returns `True` immediately after a re-anchor
+injection, masking the dropout that triggered the re-anchor in the first place.
+
+### Root Cause
+`build_reanchor_content()` extracted a block from `AGENTS.md` that included the
+literal string `<scratchpad>` — the re-anchor instruction telling the model to
+re-engage its reasoning loop. When SENTINEL injected this into `BOOT_CONTEXT.md`,
+`check_scratchpad()` found the tag in the injected block and scored the session
+coherent regardless of what the model was actually doing in its responses.
+
+The detection target (`<scratchpad>`) was appearing in the injection payload itself.
+
+### Fix Applied
+Strip the literal tag from all extracted content before writing to
+`reanchor_pending.json`:
+```python
+SCRATCHPAD_TAG = "<scratchpad>"
+SCRATCHPAD_PLACEHOLDER = "[SCRATCHPAD_LOOP_INSTRUCTION]"
+extracted = extracted.replace(SCRATCHPAD_TAG, SCRATCHPAD_PLACEHOLDER)
+```
+The placeholder preserves the semantic instruction without triggering the detector.
+The fallback string was also sanitized to remove its inline `<scratchpad>` reference.
+
+### Key Insight
+> **The injection payload and the detection signal must be disjoint.** If your
+> coherence detector looks for string X, never let string X appear in the content
+> you inject in response to detecting its absence. This is a self-referential
+> detection trap — the cure becomes indistinguishable from the disease.
+
+---
+
+## [2026-03-06] `write_reanchor_trigger` race causes re-anchor storm
+
+### Symptom
+BOOT_CONTEXT.md receives a new re-anchor block on every 5-minute coherence cycle
+even after the first re-anchor was consumed. Sentinel log shows:
+```
+[SENTINEL] Re-anchor injected into BOOT_CONTEXT.md (previous blocks cleaned)
+[SENTINEL] Coherence monitor: drift detected — re-anchor pending.
+[SENTINEL] Re-anchor injected into BOOT_CONTEXT.md (previous blocks cleaned)
+```
+Pattern repeats every 5 minutes. BOOT_CONTEXT.md keeps growing even with the
+accumulation fix in place.
+
+### Root Cause
+Race between `coherence_monitor.py` and `Invoke-ReAnchor` in SENTINEL's watchdog
+loop. The loop runs `Invoke-ReAnchor` first, then `Invoke-CoherenceCheck`. If the
+session is still showing drift after the first re-anchor injection:
+
+1. `Invoke-ReAnchor` marks `reanchor_pending.json` consumed
+2. `Invoke-CoherenceCheck` runs coherence_monitor.py
+3. coherence_monitor detects drift (session hasn't recovered yet)
+4. `write_reanchor_trigger` writes a **new** `reanchor_pending.json`
+5. Next cycle: `Invoke-ReAnchor` injects again → loop
+
+Every 5-minute cycle produces one injection. The accumulation fix stops blocks
+from stacking, but the file still gets a new block every cycle.
+
+### Fix Applied
+Added deduplication guard to `write_reanchor_trigger`: if `reanchor_pending.json`
+exists with `consumed: false`, the function skips the write and returns `False`:
+```python
+if not existing.get("consumed", True):
+    rlog("Re-anchor already pending — skipping duplicate write.")
+    return False
+```
+A pending re-anchor can only be overwritten once SENTINEL has consumed it. The
+coherence log distinguishes `reanchor_triggered` from `reanchor_skipped_pending`.
+
+### Key Insight
+> **In any producer-consumer pattern on a shared file, the producer must check
+> whether the consumer has processed the previous message before writing a new one.**
+> The `consumed` flag exists for exactly this purpose — use it on both sides.
+> Without this guard, the coherence monitor is a re-anchor pump, not a re-anchor
+> trigger.
+
+---
+
 ## [2026-03-05] Invalid config key causes silent gateway reload loop
 
 ### Symptom

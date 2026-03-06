@@ -376,6 +376,83 @@ class TestReanchorTrigger(unittest.TestCase):
             data = json.load(f)  # Should not raise
         self.assertIn("content", data)
 
+    def test_deduplication_skips_unconsumed_pending(self):
+        """
+        If reanchor_pending.json already exists with consumed=false,
+        write_reanchor_trigger must NOT overwrite it.
+        Returns False and leaves the existing file intact.
+        """
+        # Write an initial pending trigger
+        first_written = cm.write_reanchor_trigger("first re-anchor", 30, 0.6)
+        self.assertTrue(first_written, "First write should succeed")
+
+        # Attempt a second write while first is still pending (consumed=false)
+        second_written = cm.write_reanchor_trigger("second re-anchor", 35, 0.9)
+        self.assertFalse(second_written, "Second write should be skipped — first still pending")
+
+        # File should still contain the first re-anchor, not the second
+        with open(self.trigger_path) as f:
+            payload = json.load(f)
+        self.assertEqual(payload["turn"], 30, "File must not have been overwritten")
+        self.assertIn("first re-anchor", payload["content"])
+
+    def test_deduplication_allows_write_after_consumed(self):
+        """
+        Once consumed=true is set, the next write_reanchor_trigger call must succeed.
+        """
+        # Write and then mark consumed
+        cm.write_reanchor_trigger("first re-anchor", 30, 0.6)
+        with open(self.trigger_path, "r") as f:
+            payload = json.load(f)
+        payload["consumed"] = True
+        with open(self.trigger_path, "w") as f:
+            json.dump(payload, f)
+
+        # Now a new write should succeed
+        result = cm.write_reanchor_trigger("second re-anchor", 50, 0.9)
+        self.assertTrue(result, "Write after consumed=true must succeed")
+        with open(self.trigger_path) as f:
+            new_payload = json.load(f)
+        self.assertEqual(new_payload["turn"], 50)
+
+    def test_reanchor_content_has_no_scratchpad_tag(self):
+        """
+        build_reanchor_content() must never include the literal string '<scratchpad>'
+        in its output. If it does, check_scratchpad() will ghost-hit it and
+        produce false-coherent readings, masking real dropout.
+        """
+        # Patch AGENTS.md to a temp file containing a scratchpad tag
+        # (simulating what the real AGENTS.md contains)
+        tmpdir = tempfile.mkdtemp()
+        fake_agents = os.path.join(tmpdir, "AGENTS.md")
+        fake_context = os.path.join(tmpdir, "active-context.md")
+
+        with open(fake_agents, "w", encoding="utf-8") as f:
+            f.write(
+                "## CRITICAL COGNITIVE FRAMEWORK\n"
+                "Before responding, execute the ReAct loop in a <scratchpad>\n"
+                "Think carefully here.\n"
+            )
+        with open(fake_context, "w", encoding="utf-8") as f:
+            f.write("## 🔥 Priority 1: TurfTracker\nFind leads.")
+
+        orig_agents  = cm.AGENTS_MD
+        orig_context = cm.ACTIVE_CONTEXT
+        cm.AGENTS_MD    = fake_agents
+        cm.ACTIVE_CONTEXT = fake_context
+        try:
+            content = cm.build_reanchor_content()
+            self.assertNotIn(
+                "<scratchpad>", content,
+                "Re-anchor content must not contain the literal <scratchpad> tag"
+            )
+            # Should still contain the useful instruction text
+            self.assertIn("ReAct", content)
+        finally:
+            cm.AGENTS_MD    = orig_agents
+            cm.ACTIVE_CONTEXT = orig_context
+            shutil.rmtree(tmpdir)
+
 
 # ── RUNNER ────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

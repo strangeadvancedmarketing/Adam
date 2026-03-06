@@ -74,11 +74,25 @@ function Invoke-ReAnchor {
         $pending = Get-Content $pendingFile -Raw | ConvertFrom-Json
         if ($pending.consumed -eq $false -and $pending.content) {
             $bootContext = "$VAULT_PATH\workspace\BOOT_CONTEXT.md"
-            $section = "`n`n---`n`n## Re-Anchor Injection ($($pending.timestamp))`n`n$($pending.content)"
-            Add-Content -Path $bootContext -Value $section -Encoding UTF8
+
+            # Read the current BOOT_CONTEXT, strip any previously injected re-anchor
+            # blocks, then append only the new one. This prevents accumulation:
+            # each re-anchor replaces the last rather than stacking on top of it.
+            $existing = ""
+            if (Test-Path $bootContext) {
+                $existing = Get-Content $bootContext -Raw -Encoding UTF8
+                # Remove all previously injected re-anchor blocks (idempotent cleanup)
+                $existing = $existing -replace "(?s)\r?\n---\r?\n## Re-Anchor Injection.*$", ""
+                $existing = $existing.TrimEnd()
+            }
+
+            $timestamp = if ($pending.created_at) { $pending.created_at } else { (Get-Date -Format "o") }
+            $section   = "`n`n---`n`n## Re-Anchor Injection ($timestamp)`n`n$($pending.content)"
+            Set-Content -Path $bootContext -Value ($existing + $section) -Encoding UTF8
+
             $pending.consumed = $true
             $pending | ConvertTo-Json | Set-Content $pendingFile -Encoding UTF8
-            Write-Log "Re-anchor injected into BOOT_CONTEXT.md."
+            Write-Log "Re-anchor injected into BOOT_CONTEXT.md (previous blocks cleaned)."
         }
     } catch {
         Write-Log "Re-anchor failed (non-fatal): $($_.Exception.Message)"

@@ -254,7 +254,18 @@ def build_reanchor_content():
     Pull identity-critical content from live Vault files.
     Target: ~200 tokens. Surgical re-anchor, not a full context reload.
     Falls back to a minimal hardcoded string if files are unreadable.
+
+    IMPORTANT: The re-anchor content must NOT contain the literal string
+    '<scratchpad>' — that string is the detection target in check_scratchpad().
+    If the injected content contains it, the next coherence check finds a ghost
+    hit and scores the session as coherent even when it isn't, OR scores it as
+    drifting when the only hit is from the re-anchor block itself.
+    All scratchpad tags are stripped from extracted content before injection.
     """
+    # Sentinel string that must never appear in re-anchor output
+    SCRATCHPAD_TAG = "<scratchpad>"
+    SCRATCHPAD_PLACEHOLDER = "[SCRATCHPAD_LOOP_INSTRUCTION]"
+
     sections = []
 
     # Extract ReAct loop header from AGENTS.md
@@ -266,7 +277,10 @@ def build_reanchor_content():
             agents_text, re.DOTALL
         )
         if match:
-            sections.append(match.group(1)[:500].strip())
+            # Strip the literal scratchpad tag — replace with neutral placeholder
+            extracted = match.group(1)[:500].strip()
+            extracted = extracted.replace(SCRATCHPAD_TAG, SCRATCHPAD_PLACEHOLDER)
+            sections.append(extracted)
     except Exception as e:
         rlog(f"AGENTS.md read failed for re-anchor: {e}", "WARNING")
 
@@ -286,7 +300,7 @@ def build_reanchor_content():
     if not sections:
         return (
             "COHERENCE RE-ANCHOR: Scratchpad dropout detected. "
-            "Use your ReAct loop (<scratchpad>) before responding. "
+            "Re-engage your ReAct cognitive loop before responding. "
             "Check active-context.md for current priorities."
         )
 
@@ -301,7 +315,27 @@ def write_reanchor_trigger(content, turn, drift_score):
     Write reanchor_pending.json.
     SENTINEL polls for this file. When found with consumed=false,
     SENTINEL injects content into the next message context, then sets consumed=true.
+
+    DEDUPLICATION: If a pending re-anchor already exists with consumed=false,
+    this function does NOT overwrite it. The existing trigger is still waiting
+    for SENTINEL to consume it — writing a second one would cause a race where
+    SENTINEL marks the first consumed, the monitor immediately writes a new one,
+    and BOOT_CONTEXT.md accumulates a re-anchor block every 5 minutes.
+
+    Returns True if written, False if skipped (already pending).
     """
+    # Guard: don't overwrite an unconsumed pending re-anchor
+    if os.path.exists(REANCHOR_TRIGGER):
+        try:
+            with open(REANCHOR_TRIGGER, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            if not existing.get("consumed", True):
+                rlog(f"Re-anchor already pending (turn {existing.get('turn')}, "
+                     f"score {existing.get('drift_score')}) — skipping duplicate write.")
+                return False
+        except Exception:
+            pass  # Unreadable file — overwrite it
+
     payload = {
         "created_at":  datetime.now().isoformat(),
         "turn":        turn,
@@ -313,8 +347,10 @@ def write_reanchor_trigger(content, turn, drift_score):
         with open(REANCHOR_TRIGGER, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
         rlog(f"reanchor_pending.json written. Turn: {turn}, Score: {drift_score}")
+        return True
     except Exception as e:
         rlog(f"Failed to write re-anchor trigger: {e}", "ERROR")
+        return False
 
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
@@ -361,19 +397,27 @@ def main():
     # Drift confirmed
     rlog("DRIFT DETECTED — writing re-anchor trigger.", "WARNING")
     reanchor_content = build_reanchor_content()
-    write_reanchor_trigger(reanchor_content, total_turns, drift_score)
+    written = write_reanchor_trigger(reanchor_content, total_turns, drift_score)
+
+    if written:
+        action = "reanchor_triggered"
+    else:
+        action = "reanchor_skipped_pending"
+        rlog("Re-anchor already pending — SENTINEL has not consumed previous trigger yet.")
+
     append_coherence_event(
-        total_turns, context_pct, scratchpad_present, drift_score, "reanchor_triggered"
+        total_turns, context_pct, scratchpad_present, drift_score, action
     )
 
     baseline["last_check_turn"] = total_turns
-    baseline["reinjections"] = baseline.get("reinjections", 0) + 1
-    baseline["drift_events"] = baseline.get("drift_events", []) + [{
-        "turn":        total_turns,
-        "context_pct": round(context_pct, 4),
-        "drift_score": drift_score,
-        "timestamp":   datetime.now().isoformat()
-    }]
+    if written:
+        baseline["reinjections"] = baseline.get("reinjections", 0) + 1
+        baseline["drift_events"] = baseline.get("drift_events", []) + [{
+            "turn":        total_turns,
+            "context_pct": round(context_pct, 4),
+            "drift_score": drift_score,
+            "timestamp":   datetime.now().isoformat()
+        }]
     _save_baseline(baseline)
 
     rlog(f"Re-anchor complete. Session reinjections: {baseline['reinjections']}")

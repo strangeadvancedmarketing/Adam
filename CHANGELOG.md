@@ -4,6 +4,90 @@ All notable changes to the Adam Framework are documented here.
 
 ---
 
+## [v1.2.0] — 2026-03-06
+
+### Fixed
+
+#### `engine/SENTINEL.template.ps1` — `Invoke-ReAnchor` accumulates re-anchor blocks on every cycle
+
+**Root cause:** `Invoke-ReAnchor` used `Add-Content` to append a new re-anchor
+block to `BOOT_CONTEXT.md` on every trigger. Each re-anchor added ~200 tokens.
+After several drift events across multiple sessions, `BOOT_CONTEXT.md` accumulated
+stale blocks that were never cleaned — increasing Adam's context load on every
+session start and eventually producing gateway timeout errors.
+
+Additionally, `Invoke-ReAnchor` referenced `$pending.timestamp` to label the
+injection header, but `coherence_monitor.py` writes the field as `created_at`.
+This caused the header to render as a blank timestamp on every injection.
+
+**Fix:**
+- Replace `Add-Content` with read → strip → replace pattern: reads current
+  `BOOT_CONTEXT.md`, removes all prior `## Re-Anchor Injection` blocks via
+  `-replace "(?s)\r?\n---\r?\n## Re-Anchor Injection.*$", ""`, then writes
+  the new block cleanly with `Set-Content`.
+- Fixed timestamp field reference: `$pending.timestamp` → `$pending.created_at`
+  with fallback to `Get-Date -Format "o"` if field is absent.
+
+**Result:** Each re-anchor injection replaces the last — BOOT_CONTEXT.md stays
+the same size regardless of how many drift events occur in a session.
+
+**Applies to:** `engine/SENTINEL.template.ps1`. Live SENTINEL instances should
+update their `Invoke-ReAnchor` function to match. See LESSONS_LEARNED for
+recovery steps if BOOT_CONTEXT.md has already accumulated stale blocks.
+
+---
+
+#### `tools/coherence_monitor.py` — re-anchor content could contain literal `<scratchpad>` tag
+
+**Root cause:** `build_reanchor_content()` extracted a block from `AGENTS.md`
+that included the literal string `<scratchpad>` (the re-anchor instruction itself
+tells the model to use its scratchpad). When SENTINEL injected this content into
+`BOOT_CONTEXT.md`, the next coherence check found the tag in the injected block
+and scored the session as coherent — even if the model had stopped using its
+scratchpad in actual responses. Ghost hit masking real dropout.
+
+**Fix:** Strip `<scratchpad>` from all extracted re-anchor content before writing:
+```python
+SCRATCHPAD_TAG = "<scratchpad>"
+SCRATCHPAD_PLACEHOLDER = "[SCRATCHPAD_LOOP_INSTRUCTION]"
+extracted = extracted.replace(SCRATCHPAD_TAG, SCRATCHPAD_PLACEHOLDER)
+```
+The fallback string was also updated to remove the inline `<scratchpad>` tag.
+
+---
+
+#### `tools/coherence_monitor.py` — `write_reanchor_trigger` had no deduplication guard
+
+**Root cause:** If SENTINEL hadn't yet consumed a pending `reanchor_pending.json`
+when the coherence monitor ran again, `write_reanchor_trigger` would overwrite it
+with a new trigger. The race: SENTINEL marks it consumed → monitor immediately
+writes a new one → SENTINEL injects again → loop continues, writing a fresh
+re-anchor block every 5 minutes regardless of actual session state.
+
+**Fix:** Added deduplication guard — if `reanchor_pending.json` exists with
+`consumed: false`, skip the write and log it:
+```python
+if not existing.get("consumed", True):
+    rlog("Re-anchor already pending — skipping duplicate write.")
+    return False
+```
+`write_reanchor_trigger` now returns `True` (written) or `False` (skipped).
+The `main()` function uses this to distinguish `reanchor_triggered` from
+`reanchor_skipped_pending` in the coherence log.
+
+---
+
+#### `tools/test_coherence_monitor.py` — test suite updated for new fixes
+
+Four new tests added covering the three new bug cases:
+- `test_deduplication_skips_unconsumed_pending` — second write blocked while first pending
+- `test_deduplication_allows_write_after_consumed` — write succeeds after consumed=true
+- `test_reanchor_content_has_no_scratchpad_tag` — verifies `<scratchpad>` stripped from output
+
+Test count: 30 → 33.
+
+---
+
 ## [v1.1.0] — 2026-03-05
 
 ### Fixed
