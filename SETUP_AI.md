@@ -329,12 +329,15 @@ $cfg | ConvertTo-Json -Depth 20 | Set-Content "$env:USERPROFILE\.openclaw\opencl
 Verify the sleep cycle will find its script:
 ```powershell
 Test-Path "{{VAULT_PATH}}\tools\reconcile_memory.py"
+Test-Path "{{VAULT_PATH}}\tools\coherence_monitor.py"
 ```
 
-If False — copy the tools directory into the Vault:
+If either returns False — copy the tools directory into the Vault:
 ```powershell
 Copy-Item -Recurse "tools" "{{VAULT_PATH}}\tools"
 ```
+
+Both files are required. `reconcile_memory.py` is the sleep cycle (Layer 4). `coherence_monitor.py` is the coherence monitor (Layer 5) — without it, within-session drift goes undetected and BOOT_CONTEXT.md will not receive re-anchor injections.
 
 **Phase 4 complete.** The sleep cycle fires automatically on each SENTINEL start if more than 6 hours have passed since the last run. No further action needed.
 

@@ -234,7 +234,7 @@ a re-anchor payload to `reanchor_pending.json`. SENTINEL consumes it and injects
 content directly into `BOOT_CONTEXT.md` — Adam sees it on the next context load.
 
 **What was proven today:**
-- 30/30 tests passing against live session data before a single line touched production
+- 33/33 tests passing against live session data before a single line touched production
 - All 13 failure modes from the design review resolved (JSONL parsing, token estimation,
   session file targeting, lock contention, baseline reset, log rotation)
 - First coherence check ran at 16:30 — exit 0, session coherent
@@ -281,6 +281,13 @@ Session end
 ```
 
 **Current state:** Shipped. Running in production. First check confirmed exit 0.
+
+**v1.2.0 post-ship fixes (March 6, 2026):** Three production bugs caught and fixed:
+`Invoke-ReAnchor` was using `Add-Content` (BOOT_CONTEXT.md accumulated stale blocks
+across sessions); `build_reanchor_content()` was injecting a literal `<scratchpad>`
+tag into the re-anchor payload (ghost hits masking real dropout); `write_reanchor_trigger`
+had no dedup guard (re-anchor storm every 5 min in drifting sessions). All three fixed
+in SENTINEL.template.ps1 and coherence_monitor.py. Test suite: 30 → 33. See CHANGELOG.md.
 
 **Why this matters beyond this repo:** Within-session coherence degradation affects
 every long-context AI deployment. The reason most production AI systems cap session

@@ -102,8 +102,19 @@ during the session:
 
 ```
 SESSION START
-├── BOOT_CONTEXT.md loaded (Layer 1 — deterministic, compiled by SENTINEL)
+├── Sleep cycle fires (if >6 hours since last run) — OFFLINE MODE
+│   └── reconcile_memory.py runs before gateway launches
+│       Merges daily logs → CORE_MEMORY.md (via Gemini)
+│       Increments neural graph (via mcporter → neural-memory)
+│       Gateway is still offline: Markdown + neural layers only
+│       Result: cortex is up-to-date before hippocampus compiles
+│
+├── BOOT_CONTEXT.md compiled (Layer 1 — deterministic, compiled by SENTINEL)
 │   └── AI knows: identity, active projects, recent state, today's date
+│
+├── Gateway starts → health check passes → vector reindex runs (ONLINE)
+│   └── openclaw memory index syncs vector store with offline reconcile writes
+│       New memory from sleep cycle is now searchable via Layer 2
 │
 ├── nmem_context fires (Layer 3 — neural graph spreading activation)
 │   └── AI knows: associative context, related history, relevant connections
@@ -117,6 +128,19 @@ SESSION START
     └── AI writes: lasting notes back to Vault before truncation
         └── Cortex updated. Next boot compiles new hippocampus from updated cortex.
 ```
+
+**Why the split between offline and online reconcile?**
+
+The sleep cycle (reconcile) doesn't need the gateway — it reads session JSONL files
+and Vault Markdown directly, calls Gemini externally, and writes back to Markdown and
+the neural graph via mcporter. Running it offline means the cortex is already updated
+*before* BOOT_CONTEXT.md is compiled, so the hippocampus contains the latest state
+from the moment the session starts.
+
+The vector reindex runs *after* the gateway is healthy because the OpenClaw vector
+store requires the gateway process to be running. It's a sequential dependency, not a
+design choice. The offline reconcile handles what it can; the online reindex finishes
+the sync.
 
 The loop is closed. Every session both reads from and writes back to the long-term
 cortex. The hippocampus is rebuilt fresh from updated state on every boot.

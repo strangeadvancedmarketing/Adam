@@ -323,9 +323,13 @@ Copy-Item -Recurse "tools" "C:\MyAIVault\tools"
 cp -r tools ~/MyAIVault/tools
 ```
 
-Verify both files exist:
-- `YOUR_VAULT/tools/reconcile_memory.py`
-- `YOUR_VAULT/tools/coherence_monitor.py` If either returns `False`, SENTINEL will silently skip that component on every boot — no error, just a log line saying "not found - skipping."
+Verify both critical files exist:
+```powershell
+Test-Path "C:\MyAIVault\tools\reconcile_memory.py"   # sleep cycle
+Test-Path "C:\MyAIVault\tools\coherence_monitor.py"  # Layer 5 coherence monitor
+```
+
+Both should return `True`. If either returns `False`, SENTINEL will silently skip that component on every boot — no crash, just a log line saying the file wasn't found. The coherence monitor is Layer 5 — without it, within-session drift goes undetected.
 
 ### Step 11: Add Your Gemini API Key
 

@@ -125,9 +125,13 @@ The Adam Framework solves both problems at the architecture level with 5 complem
 
 **Exit codes:** 0 = coherent, 1 = drift detected + re-anchor written, 2 = error
 
+**Deployment path:** `coherence_monitor.py` runs from `YOUR_VAULT/tools/coherence_monitor.py` at runtime.
+The public repo copy lives in `tools/` — copy it to your Vault's `tools/` directory as part of setup
+(see SETUP_HUMAN.md Phase 4 Step 10). SENTINEL calls the Vault copy, not the repo copy.
+
 **Files:**
-- `tools/coherence_monitor.py` — the monitor
-- `tools/test_coherence_monitor.py` — 30-test suite, validated against live session data before first production run
+- `tools/coherence_monitor.py` — the monitor (deploy to `YOUR_VAULT/tools/`)
+- `tools/test_coherence_monitor.py` — 33-test suite, validated against live session data before first production run
 - `vault-templates/coherence_baseline.template.json` — session baseline schema
 - `vault-templates/coherence_log.template.json` — event log schema (session-scoped, resets daily)
 
@@ -141,10 +145,24 @@ The Adam Framework solves both problems at the architecture level with 5 complem
 SESSION START
      │
      ▼
+SENTINEL checks if sleep cycle ran in last 6 hours
+     │
+     ├─ Yes → skip reconcile
+     │
+     └─ No → run reconcile_memory.py (offline mode)
+               Merges daily logs into CORE_MEMORY.md via Gemini
+               Incremental neural ingest to neural graph
+               (Gateway is still offline — Markdown + neural layers only)
+     │
+     ▼
 SENTINEL writes TODAY.md + compiles BOOT_CONTEXT.md
      │
      ▼
 Gateway starts → OpenClaw injects BOOT_CONTEXT.md
+     │
+     ▼
+Gateway health check passes → vector reindex runs (CLI: openclaw memory index)
+     Syncs vector store with anything written by the offline reconcile
      │
      ▼
 AI reads TODAY.md + daily log (Layer 1)
