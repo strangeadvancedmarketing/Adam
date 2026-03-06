@@ -35,7 +35,7 @@ The neural graph has real connections. Your AI starts referencing things from pr
 **Month 1**
 The sleep cycle has merged weeks of daily logs into your core memory file. Your AI has accumulated genuine project state, real decisions, real history. The memory compounds. This is the solve for AI amnesia — not magic, just consistent architecture.
 
-**The proof:** [353 sessions, 6,619 turns, 30 days of production use.](docs/PROOF.md) The system on your desk is the evidence.
+**The proof:** [353 sessions, 6,619 turns, 8 months of production use.](docs/PROOF.md) The system on your desk is the evidence.
 
 ---
 
