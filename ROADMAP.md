@@ -20,7 +20,7 @@
 
 The core framework is complete and production-validated.
 
-- ✅ **4-layer memory architecture** — Vault injection, session search, neural graph, nightly reconciliation
+- ✅ **5-layer memory and coherence architecture** — Vault injection, session search, neural graph, nightly reconciliation, coherence monitor
 - ✅ **Layer 5: Coherence monitor** — scratchpad dropout detection, real token depth tracking, auto re-anchor via BOOT_CONTEXT injection. Within-session coherence degradation: solved.
 - ✅ **SENTINEL watchdog** — boot sequence, date injection, BOOT_CONTEXT compilation, auto-restart, sleep cycle, coherence check every 5 min
 - ✅ **Neural graph integration** — 12,393 neurons / 40,532 synapses, live and growing

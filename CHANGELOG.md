@@ -350,8 +350,9 @@ zero instrumentation overhead — the system's own defined behavior is the detec
 
 ### Initial public release
 
-- 4-layer persistent memory architecture: Vault injection, MCP memory search,
+- 4-layer persistent memory architecture at launch: Vault injection, MCP memory search,
   neural graph (7,211 neurons / 29,291 synapses), nightly Gemini reconciliation
+  *(Layer 5 coherence monitor shipped v1.2.0 — see above)*
 - `engine/openclaw.template.json` — sanitized gateway config with all placeholders
 - `engine/SENTINEL.template.ps1` — watchdog, auto-start, sleep cycle scheduler
 - `engine/mcporter.template.json` — MCP server wiring
@@ -359,7 +360,7 @@ zero instrumentation overhead — the system's own defined behavior is the detec
 - `tools/legacy_importer.py` — extract facts from Claude/ChatGPT export
 - `tools/ingest_triples.ps1` — feed extracted facts into neural graph
 - `tools/reconcile_memory.py` — nightly sleep cycle runner
-- `docs/ARCHITECTURE.md` — deep dive on all 4 layers
+- `docs/ARCHITECTURE.md` — deep dive on all 5 layers
 - `docs/CONFIG_REFERENCE.md` — every config field explained
 - `docs/PROOF.md` — 353-session production proof of work
 - `showcase/ai-amnesia-solved.html` — interactive data visualization

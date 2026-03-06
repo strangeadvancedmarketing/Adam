@@ -95,7 +95,7 @@ before every launch. The AI reads it. No hallucination possible.
 
 ---
 
-## The Four-Layer Handoff
+## The Five-Layer Handoff
 
 BOOT_CONTEXT.md is Layer 1 — the foundation. But it hands off to the other layers
 during the session:
