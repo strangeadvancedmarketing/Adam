@@ -557,8 +557,61 @@ def main():
                         old_lines, new_lines, neural_count, neural_skip_reason, status,
                         neurons, synapses)
 
+    # Part 8: Update TOPIC_INDEX freshness
+    try:
+        update_topic_index(to_process, reconciled)
+    except Exception as e:
+        rlog(f"TOPIC_INDEX update skipped (non-fatal): {e}", "WARNING")
+
     rlog(f"Sleep cycle complete. Status: {status}")
     sys.exit(0)
+
+
+def update_topic_index(processed_logs, reconciled_memory):
+    """
+    Update TOPIC_INDEX.md confidence scores based on recency.
+    Confidence is mechanical: days since last_touched.
+    Only updates confidence — does NOT rewrite last_known_state (that's Adam's job via Telegram).
+    """
+    TOPIC_INDEX_PATH = os.path.join(paths["vault_root"], "workspace", "TOPIC_INDEX.md")
+    if not os.path.exists(TOPIC_INDEX_PATH):
+        rlog("TOPIC_INDEX.md not found — skipping update.", "WARNING")
+        return
+
+    today = datetime.now().date()
+
+    with open(TOPIC_INDEX_PATH, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    def recalc_confidence(last_touched_str, stale_after_days):
+        try:
+            last = datetime.strptime(last_touched_str.strip(), "%Y-%m-%d").date()
+            days_since = (today - last).days
+            if days_since <= 2:
+                return "HIGH"
+            elif days_since <= int(stale_after_days):
+                return "MEDIUM"
+            else:
+                return "LOW"
+        except Exception:
+            return "LOW"
+
+    import re as _re
+
+    def replace_confidence(match):
+        last_touched = _re.search(r"last_touched:\s*(\S+)", match.group(0))
+        stale_after = _re.search(r"stale_after_days:\s*(\d+)", match.group(0))
+        if not last_touched or not stale_after:
+            return match.group(0)
+        new_conf = recalc_confidence(last_touched.group(1), stale_after.group(1))
+        return _re.sub(r"confidence:\s*\S+", f"confidence: {new_conf}", match.group(0))
+
+    updated = _re.sub(r"(## .+?\n(?:- .+\n)*)", replace_confidence, content)
+
+    with open(TOPIC_INDEX_PATH, "w", encoding="utf-8") as f:
+        f.write(updated)
+
+    rlog("TOPIC_INDEX.md confidence scores updated.")
 
 
 if __name__ == "__main__":
