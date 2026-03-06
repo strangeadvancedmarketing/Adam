@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.adamframework.sentinel.plist
+  macOS launchd agent — auto-starts SENTINEL on login.
+  Equivalent of Windows Task Scheduler registration in SETUP_HUMAN.md.
+
+  INSTALL:
+    1. Copy this file to ~/Library/LaunchAgents/
+    2. Replace YOUR_USERNAME and YOUR_VAULT_PATH with your actual values
+    3. Load it:
+         launchctl load ~/Library/LaunchAgents/com.adamframework.sentinel.plist
+    4. Verify it's loaded:
+         launchctl list | grep sentinel
+
+  UNINSTALL:
+    launchctl unload ~/Library/LaunchAgents/com.adamframework.sentinel.plist
+    rm ~/Library/LaunchAgents/com.adamframework.sentinel.plist
+
+  LOGS:
+    Stdout → ~/.openclaw/sentinel.log  (SENTINEL writes this itself)
+    launchd stdout → /tmp/sentinel-launchd.log
+    launchd stderr → /tmp/sentinel-launchd-error.log
+-->
+<plist version="1.0">
+<dict>
+
+  <!-- Unique identifier for this agent -->
+  <key>Label</key>
+  <string>com.adamframework.sentinel</string>
+
+  <!-- The script to run -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/YOUR_USERNAME/.openclaw/SENTINEL.sh</string>
+  </array>
+
+  <!-- Start on login -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Restart automatically if SENTINEL exits unexpectedly -->
+  <key>KeepAlive</key>
+  <true/>
+
+  <!-- Environment variables available to the script -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+    <key>VAULT_PATH</key>
+    <string>/Users/YOUR_USERNAME/YOUR_VAULT_PATH</string>
+  </dict>
+
+  <!-- launchd-level log files (separate from SENTINEL's own sentinel.log) -->
+  <key>StandardOutPath</key>
+  <string>/tmp/sentinel-launchd.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/sentinel-launchd-error.log</string>
+
+  <!-- Throttle restart if SENTINEL crashes immediately (wait 10s) -->
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+</dict>
+</plist>
