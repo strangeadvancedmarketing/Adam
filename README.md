@@ -281,3 +281,37 @@ Jereme Strange — Strange Advanced Marketing
 Miami, FL
 
 *No CS degree. No research team. No GPU cluster. Just a problem that needed solving.*
+
+---
+
+## Extend Adam
+
+Once Adam is running, give him real-world capabilities with the **[adam-skills](https://github.com/strangeadvancedmarketing/adam-skills)** library:
+
+| Skill | What it does |
+|-------|-------------|
+| weather | Current forecast — zero config |
+| news-headlines | Top headlines via RSS — zero config |
+| morning-briefing | Weather + news + unread email in one command |
+| email-intelligence | Proactive triage, urgency scoring, Telegram alerts |
+| inner-eye | Screen + webcam vision via Gemini |
+| contractor-prospector | Lead gen pipeline: find leads, build demo sites, send outreach |
+| synthesis | Latent pattern recognition across domains |
+| presence-pulse | Loads session resonance from previous heartbeat |
+
+```powershell
+# Install any skill in 30 seconds
+cd C:\Users\<you>\.openclaw\workspace\skills
+git clone https://github.com/strangeadvancedmarketing/adam-skills.git
+cd adam-skills
+.\install.ps1
+```
+
+---
+
+## Built By
+
+Jereme Strange — Strange Advanced Marketing  
+Miami, FL
+
+*No CS degree. No research team. No GPU cluster. Just a problem that needed solving.*
