@@ -414,3 +414,6 @@ The mcporter → neural-memory connection broke mid-run. Diagnose the connection
 
 **Gemini API returns 429 (rate limit):**
 reconcile_memory.py retries automatically with backoff (5s, 15s, 45s). If all retries fail, the original CORE_MEMORY.md is preserved unchanged. The logs will be retried on the next SENTINEL start.
+
+**Gateway crash-loops after modifying openclaw.json:**
+OpenClaw does not support per-skill configuration entries under the `skills` key. If you add a block like `"skills": { "skill-name": { ... } }`, the gateway will throw `Config invalid: Unrecognized key` and crash-loop. Remove the `skills` block entirely. Any API keys required by skills should be placed in the top-level `env` block instead.

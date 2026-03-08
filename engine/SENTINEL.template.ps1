@@ -1,6 +1,6 @@
 ###############################################################
 #  SENTINEL.template.ps1 - Adam Framework Watchdog
-#  Version: 1.2.0
+#  Version: 1.2.1
 #
 #  WHAT THIS DOES:
 #    1. Kills stale processes from previous sessions
@@ -56,14 +56,14 @@ function Invoke-CoherenceCheck {
         $result = & $PYTHON_EXE $script --vault-path "$VAULT_PATH" 2>&1
         $exit   = $LASTEXITCODE
         if ($exit -eq 1) {
-            Write-Log "Coherence monitor: drift detected — re-anchor pending."
+            Write-Log "Coherence check: drift detected — re-anchor pending."
         } elseif ($exit -eq 0) {
-            Write-Log "Coherence monitor: session coherent."
+            Write-Log "Coherence check: exit 0"
         } else {
-            Write-Log "Coherence monitor: error (exit $exit) — skipping."
+            Write-Log "Coherence check: error (exit $exit) — skipping."
         }
     } catch {
-        Write-Log "Coherence monitor: exception — $($_.Exception.Message)"
+        Write-Log "Coherence check: exception — $($_.Exception.Message)"
     }
 }
 
@@ -139,7 +139,7 @@ if (Test-Path $reconcileScript) {
     }
 
     if ($runReconcile) {
-        Write-Log "Sleep cycle: running reconcile_memory.py..."
+        Write-Log "Sleep cycle: running reconcile_memory.py (gateway offline - Markdown + neural only)..."
         $geminiKey = ""
         try {
             $ocCfg     = Get-Content "$OPENCLAW_DIR\openclaw.json" -Raw | ConvertFrom-Json
@@ -163,7 +163,7 @@ if (Test-Path $reconcileScript) {
 # Reads your identity files and compiles them into BOOT_CONTEXT.md
 # OpenClaw injects this file automatically on session start.
 # This is how your AI knows who it is before it says a single word.
-Write-Log "Compiling BOOT_CONTEXT.md..."
+Write-Log "Compiling BOOT_CONTEXT.md for deterministic identity injection..."
 try {
     $coreMemory    = Get-Content "$VAULT_PATH\CORE_MEMORY.md" -Raw -Encoding UTF8
     $activeContext = ""
@@ -185,16 +185,16 @@ try {
 # ── 5. LAUNCH GATEWAY ────────────────────────────────────────
 Write-Log "Launching OpenClaw Gateway..."
 $gateway = Start-Gateway
-Write-Log "Gateway LIVE on port 18789."
+Write-Log "Adam is LIVE on port 18789. TTS: Edge primary (en-GB-RyanNeural)."
 
-Write-Log "SENTINEL ACTIVE — Watchdog loop starting. Gateway check every 30s. Coherence monitor every 5 min."
+Write-Log "SENTINEL ACTIVE - Watchdog starting. Coherence monitor every 5 min."
 
-# ── 7. VECTOR REINDEX (after gateway confirmed healthy) ──────
+# ── 6. VECTOR REINDEX (after gateway confirmed healthy) ──────
 # This fires only if the sleep cycle ran this session.
 # The gateway MUST be live before we trigger a reindex — that's why
 # this block is here and not in reconcile_memory.py.
 if ($runReconcile) {
-    Write-Log "Waiting for gateway to be healthy before vector reindex..."
+    Write-Log "Waiting for gateway health before vector reindex..."
     $healthy  = $false
     $attempts = 0
     while (-not $healthy -and $attempts -lt 20) {
@@ -216,11 +216,11 @@ if ($runReconcile) {
             Write-Log "Vector reindex failed (non-fatal): $($_.Exception.Message)"
         }
     } else {
-        Write-Log "Gateway not healthy after 60s — vector reindex skipped this cycle."
+        Write-Log "Gateway not healthy after 60s - vector reindex skipped this cycle."
     }
 }
 
-# ── 8. WATCHDOG LOOP ─────────────────────────────────────────
+# ── 7. WATCHDOG LOOP ─────────────────────────────────────────
 # Every 30 seconds: check gateway alive, restart if dead.
 # Every 10 ticks (5 minutes): run Layer 5 coherence check.
 # Your AI should never be down for more than 30 seconds.

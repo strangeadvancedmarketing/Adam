@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.19-2",
-    "lastTouchedAt": "2026-03-05T00:00:00.000Z"
+    "lastTouchedAt": "2026-03-08T00:00:00.000Z"
   },
 
   "env": {
@@ -121,7 +121,7 @@
 
   "messages": {
     "tts": {
-      "auto": "always",
+      "auto": "tagged",
       "mode": "final",
       "provider": "edge",
       "edge": {
@@ -153,7 +153,7 @@
         "maxChars": 2500,
         "breakPreference": "paragraph"
       },
-      "streamMode": "partial"
+      "streaming": "partial"
     }
   },
 

@@ -421,3 +421,14 @@ Run with `-StartAt X` to resume from where it stopped. Check that mcporter is ru
 
 **"Sleep cycle not running"**
 Check sentinel.log for "Sleep cycle skipped" messages. Most common cause: GEMINI_API_KEY not in openclaw.json env block, or the `_reconcile_state.json` thinks it ran recently. Delete the state file to force a run: `del "C:\MyAIVault\workspace\memory\_reconcile_state.json"`.
+**"Sleep cycle not running"**
+Check sentinel.log for "Sleep cycle skipped" messages. Most common cause: GEMINI_API_KEY not in openclaw.json env block, or the `_reconcile_state.json` thinks it ran recently. Delete the state file to force a run: `del "C:\MyAIVault\workspace\memory\_reconcile_state.json"`.
+
+**"Gateway crash-loops after adding a skill or plugin"**
+OpenClaw does not support per-skill configuration entries directly under the `skills` key in `openclaw.json`. If you add something like:
+```json
+"skills": {
+  "my-skill-name": { "env": { "MY_KEY": "value" } }
+}
+```
+The gateway will throw `Config invalid: Unrecognized key: "my-skill-name"` and crash-loop every 30 seconds. The fix: remove the `skills` block entirely, or use the `env` block at the top level for any API keys your skills need.
