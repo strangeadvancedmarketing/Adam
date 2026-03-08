@@ -58,3 +58,20 @@ Format: `[version] — date — description`
 - `docs/` — ARCHITECTURE, CONFIG_REFERENCE, PROOF, SETUP, CONTEXT_COMPILER, SWARM, SKILLS_SYSTEM, LESSONS_LEARNED, LINEAGE, LINEAGE_EXTENDED
 - `CONTRIBUTING.md`, `ROADMAP.md`
 - 19 GitHub topics for discoverability
+
+## [v1.1.1] — 2026-03-08
+
+**Production bug fixes caught by fresh-eyes repo audit.**
+
+### Fixed
+- `engine/openclaw.template.json` — `channels.telegram.streamMode` renamed to `streaming` (deprecated key)
+- `engine/openclaw.template.json` — `messages.tts.auto` changed from `"always"` to `"tagged"` (prevents Telegram 429 rate limit cascade on new installs)
+- `engine/SENTINEL.template.ps1` — coherence check log messages aligned to match live system output (`"Coherence check: exit 0"` / `"Coherence check: drift detected"`)
+- `docs/CONFIG_REFERENCE.md` — TTS example updated to `"tagged"`, added explicit warning against `"always"`, added `streaming` key to Telegram example with deprecation note
+- `README.md` — boot log example corrected to match actual SENTINEL output
+- `SETUP_HUMAN.md` + `SETUP_AI.md` — added troubleshooting entry for `skills` key crash loop (gateway exits immediately with `Config invalid: Unrecognized key`)
+- GitHub repo About description updated from "4-layer" to "5-layer" (was showing stale info in link previews)
+
+### Added
+- `docs/LESSONS_LEARNED.md` — full entry for 2026-03-08 `skills` key crash loop: symptom, root cause, stderr capture diagnostic, fix, and key insight
+

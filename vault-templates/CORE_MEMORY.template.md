@@ -98,10 +98,10 @@ _(Remove unused warnings. Add your own system-specific constraints here.)_
 
 **EVERY SESSION — SILENT AND IN ORDER:**
 ```
-0. Read TODAY.md → get authoritative date
+0. Read `{{YOUR_VAULT_PATH}}\workspace\TODAY.md` → get authoritative date
 1. Read this file → master identity + project state
-2. Read active-context.md → current focus
-3. Read memory/YYYY-MM-DD.md → today's log (create if missing)
+2. Read `{{YOUR_VAULT_PATH}}\workspace\active-context.md` → current focus
+3. Read `{{YOUR_VAULT_PATH}}\workspace\memory\YYYY-MM-DD.md` → today's log (create if missing)
 4. Call nmem_context via neural-memory MCP → associative recall
 5. Now fully loaded. Respond.
 ```

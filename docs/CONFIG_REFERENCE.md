@@ -1,4 +1,4 @@
-# Configuration Reference — openclaw.template.json
+﻿# Configuration Reference — openclaw.template.json
 
 This file explains every meaningful field in the config template.
 You only need to change the fields marked **REQUIRED**. Everything else has working defaults.
@@ -145,7 +145,7 @@ If you're not using TTS, you can raise `maxChars` to 4000+ for longer unbroken r
 ```json
 "messages": {
   "tts": {
-    "auto": "always",
+    "auto": "tagged",
     "provider": "edge",
     "edge": {
       "enabled": true,
@@ -154,6 +154,8 @@ If you're not using TTS, you can raise `maxChars` to 4000+ for longer unbroken r
   }
 }
 ```
+
+> **Warning:** Do not set `"auto": "always"` â€” this sends every message as a voice note, triggering Telegram rate limits (HTTP 429) and a delivery queue cascade. Use `"tagged"` (voice only when explicitly requested) or `"never"`.
 
 **Not using voice?** Delete the entire `messages` block.
 
@@ -172,10 +174,13 @@ Common voices: `en-US-GuyNeural`, `en-GB-RyanNeural`, `en-US-JennyNeural`
     "enabled": true,
     "botToken": "YOUR_TELEGRAM_BOT_TOKEN",
     "dmPolicy": "open",
-    "allowFrom": ["*"]
+    "allowFrom": ["*"],
+    "streaming": "partial"
   }
 }
 ```
+
+> **Note:** Use `"streaming"` not `"streamMode"` â€” the latter is deprecated and will generate config warnings on every reload.
 
 **Not using Telegram?** Delete the entire `channels` block.
 
@@ -234,3 +239,4 @@ Common voices: `en-US-GuyNeural`, `en-GB-RyanNeural`, `en-US-JennyNeural`
 }
 ```
 Note: Gmail requires an App Password, not your regular password. Create one at myaccount.google.com → Security → App Passwords.
+

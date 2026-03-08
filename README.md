@@ -1,4 +1,4 @@
-# The Adam Framework
+﻿# The Adam Framework
 ### Your AI's memory should outlive any model, any vendor, any failure.
 #### AI Amnesia — Solved. Coherence Degradation — Solved. Identity Sovereignty — Built In.
 
@@ -339,3 +339,4 @@ Jereme Strange — Strange Advanced Marketing
 Miami, FL
 
 *No CS degree. No research team. No GPU cluster. Just a problem that needed solving.*
+

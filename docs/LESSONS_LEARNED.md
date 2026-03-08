@@ -611,3 +611,85 @@ version of the template, remove:
 
 Edge TTS requires no configuration — it's built into Windows and works out of the
 box with OpenClaw's TTS provider block.
+
+---
+
+## [2026-03-08] `skills` key in openclaw.json causes immediate gateway crash loop
+
+### Symptom
+Gateway starts (SENTINEL logs "Gateway started - PID XXXXX") then immediately exits
+with code 1. Watchdog restarts it every 30 seconds. Crash loop continues indefinitely.
+Manually launching gateway shows:
+
+```
+Config invalid: Unrecognized key: "nano-banana-pro" in skills
+```
+
+or similar. No Telegram messages. Adam completely unreachable.
+
+### Root Cause
+A per-skill configuration block was added under the `skills` key in `openclaw.json`:
+
+```json
+"skills": {
+  "nano-banana-pro": {
+    "env": { "GEMINI_API_KEY": "your-key-here" }
+  }
+}
+```
+
+OpenClaw does not support per-skill config entries under the top-level `skills` key.
+The schema validator rejects any unrecognized key inside `skills` and returns exit code 1
+before the gateway starts. Since the config is checked on every start, the watchdog
+restart loop produces the same exit immediately every 30 seconds.
+
+The crash is silent from SENTINEL's perspective — the log only shows process lifecycle
+events, not gateway stderr. The crash reason is invisible until you launch the gateway
+manually with output redirection.
+
+### How To Diagnose
+If gateway is crash-looping (starts and dies within seconds, repeating every 30s):
+
+```powershell
+# Launch gateway manually with stderr captured
+$dir = "$env:USERPROFILE\.openclaw"
+cmd /c "`"$dir\gateway.cmd`" > C:\tmp\gw_out.txt 2> C:\tmp\gw_err.txt"
+Get-Content C:\tmp\gw_err.txt
+```
+
+Look for `Config invalid` or `Unrecognized key` in the output.
+
+### Fix
+Remove the `skills` block entirely from `openclaw.json`. Any API keys required by
+skills should go in the top-level `env` block instead:
+
+```json
+"env": {
+  "LLM_API_KEY": "...",
+  "GEMINI_API_KEY": "your-key-here"
+}
+```
+
+The `skills` key in `openclaw.json` must remain empty `{}` or be omitted entirely.
+
+### Secondary Issue Found (Same Session)
+`channels.telegram.streamMode` was deprecated — renamed to `streaming`. A stale
+`streamMode` key will not crash the gateway but will cause a non-fatal config warning.
+Check with `openclaw doctor` if behavior is degraded but the gateway is alive.
+
+### Prevention
+Always validate config before restarting SENTINEL after any `openclaw.json` edit:
+```powershell
+Get-Content "$env:USERPROFILE\.openclaw\openclaw.json" -Raw | ConvertFrom-Json | Out-Null
+```
+If this throws, fix the config before SENTINEL restarts the gateway.
+
+### Key Insight
+> **OpenClaw's gateway crash on invalid config is immediate and silent.** It exits
+> code 1 with no visible output unless you capture stderr manually. The watchdog
+> has no way to distinguish a bad-config crash from a transient failure — it just
+> keeps restarting. If you see the 30-second restart pattern, always check config
+> before anything else.
+>
+> **Add stderr capture to SENTINEL** so future crashes are self-diagnosing. Redirect
+> gateway output to a log file on launch — the reason will be in the first few lines.
