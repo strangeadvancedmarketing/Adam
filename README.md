@@ -8,7 +8,7 @@
   <a href="https://strangeadvancedmarketing.github.io/Adam/showcase/ai-amnesia-solved.html"><img src="https://img.shields.io/badge/📊%20Interactive%20Proof-353%20Sessions-blue?style=for-the-badge" alt="Interactive Proof"></a>
   <a href="docs/LINEAGE_EXTENDED.md"><img src="https://img.shields.io/badge/📖%20The%20Story-8%20Months-green?style=for-the-badge" alt="The Story"></a>
   <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge" alt="MIT License">
-  <a href="https://strangemarket.gumroad.com/l/bjvnas"><img src="https://img.shields.io/badge/%E2%9A%A1%20Fast--Track%20Setup-%2449-ff90e8?style=for-the-badge" alt="Fast-Track Setup"></a>
+  <a href="https://strangemarket.gumroad.com/l/adam-framework"><img src="https://img.shields.io/badge/%E2%9A%A1%20Fast--Track%20Setup-%2449-ff90e8?style=for-the-badge" alt="Fast-Track Setup"></a>
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@
 
 The framework is MIT open source — everything you need is in this repo.
 
-If you want to skip the setup and get straight to a working system, the **[Fast-Track Package](https://strangemarket.gumroad.com/l/bjvnas)** ($49) includes pre-filled templates, a step-by-step guide written for non-developers, and all tools pre-configured.
+If you want to skip the setup and get straight to a working system, the **[Fast-Track Package](https://strangemarket.gumroad.com/l/adam-framework)** ($49) includes pre-filled templates, a step-by-step guide written for non-developers, and all tools pre-configured.
 
 > Framework is free. Setup support is optional. Your call.
 
