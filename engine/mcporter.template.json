@@ -1,32 +1,42 @@
 {
   "_comment": "Adam Framework - mcporter.template.json",
-  "_instructions": "mcporter routes MCP server connections for OpenClaw. Copy this to your mcporter config location. Replace all YOUR_* placeholders. Remove any server blocks you don't need.",
+  "_instructions": "mcporter routes MCP server connections for OpenClaw. Copy this to your mcporter config location (run 'mcporter config path' to find it). Replace all YOUR_* placeholders. Remove any server blocks you don't need.",
   "_mcporter_config_location": "Run 'mcporter config path' to find where this file should live on your system.",
 
-  "servers": {
+  "_fix_note_2026-03-11": "BREAKING FIX: The desktop-commander entry previously used 'command: desktop-commander, args: [serve]' — that package name does not resolve via npx and causes all desktop-commander tool calls to fail with 'Tool not found'. The correct invocation is 'npx -y @wonderwhy-er/desktop-commander@latest' as shown below. Additionally, the neural-memory module path was corrected from 'neural_memory.mcp_server' to 'neural_memory.mcp' — the old path causes a ModuleNotFoundError on launch. Both errors cause silent MCP tool failures with no obvious crash.",
 
-    "neural-memory": {
-      "_comment": "Local SQLite knowledge graph. Layer 3 of the Adam Framework. Required for full memory functionality.",
-      "command": "python",
-      "args": ["-m", "neural_memory.mcp_server"],
-      "env": {}
+  "mcpServers": {
+
+    "desktop-commander": {
+      "_comment": "File system and terminal access for the AI. IMPORTANT: package name is @wonderwhy-er/desktop-commander — do NOT use 'desktop-commander' as the command, it does not resolve. See fix note above.",
+      "command": "npx",
+      "args": ["-y", "@wonderwhy-er/desktop-commander@latest"]
     },
 
-    "firecrawl": {
-      "_comment": "Web scraping and search. Recommended replacement for built-in web search. Get a free key at firecrawl.dev",
-      "command": "npx",
-      "args": ["-y", "firecrawl-mcp-server"],
+    "neural-memory": {
+      "_comment": "Local SQLite knowledge graph. Layer 3 of the Adam Framework. Required for full memory functionality. Module path is neural_memory.mcp — NOT neural_memory.mcp_server (old path causes ModuleNotFoundError).",
+      "command": "python",
+      "args": ["-m", "neural_memory.mcp"],
       "env": {
-        "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY"
+        "NEURALMEMORY_BRAIN": "default"
       }
     },
 
     "gemini": {
-      "_comment": "Google Gemini — text, vision, document analysis. Optional.",
-      "command": "npx",
-      "args": ["-y", "@google/gemini-mcp"],
+      "_comment": "Google Gemini — text, vision, document analysis. Used by the nightly sleep cycle (reconcile_memory.py). Optional for general use.",
+      "command": "node",
+      "args": ["YOUR_PATH_TO/gemini-mcp-server/index.js"],
       "env": {
         "GEMINI_API_KEY": "YOUR_GEMINI_API_KEY"
+      }
+    },
+
+    "firecrawl": {
+      "_comment": "Web scraping and content extraction. Recommended replacement for built-in web search. Get a free key at firecrawl.dev",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY"
       }
     },
 
@@ -35,15 +45,8 @@
       "command": "npx",
       "args": ["-y", "@notionhq/notion-mcp-server"],
       "env": {
-        "NOTION_API_KEY": "YOUR_NOTION_INTEGRATION_TOKEN"
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer YOUR_NOTION_INTEGRATION_TOKEN\", \"Notion-Version\": \"2022-06-28\"}"
       }
-    },
-
-    "desktop-commander": {
-      "_comment": "File system and terminal access for the AI. Gives the AI real tools to work with. Install: npm install -g @desktop-commander/mcp",
-      "command": "desktop-commander",
-      "args": ["serve"],
-      "env": {}
     },
 
     "openrouter": {
@@ -54,8 +57,9 @@
         "OPENROUTER_API_KEY": "YOUR_OPENROUTER_API_KEY"
       }
     }
+
   },
 
   "_adding_more_servers": "Search npm for 'mcp-server' to find community MCP servers for Slack, GitHub, Google Drive, and more. Any MCP-compatible server can be added here.",
-  "_security_note": "Never commit this file with real API keys. Use environment variables or a .env file."
+  "_security_note": "Never commit this file with real API keys. Use environment variables or a secrets manager."
 }

@@ -1,7 +1,7 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.2.19-2",
-    "lastTouchedAt": "2026-03-08T00:00:00.000Z"
+    "lastTouchedVersion": "2026.3.11",
+    "lastTouchedAt": "2026-03-11T00:00:00.000Z"
   },
 
   "env": {
@@ -46,6 +46,8 @@
         "nvidia/meta/llama-3.3-70b-instruct": {}
       },
       "memorySearch": {
+        "_fix_note_2026-03-11": "enabled:true is REQUIRED in this block. Without it, resolveMemoryToolContext receives undefined for cfg and exits early before any enabled check runs — memory_search and memory_get return 'Tool not found' silently even though the memory-core plugin is registered. The plugins.entries.memory-core.enabled key is NOT sufficient on its own. Both locations must have enabled:true.",
+        "enabled": true,
         "sources": ["memory", "sessions"],
         "extraPaths": [
           "C:\\YOUR_VAULT_PATH\\CORE_MEMORY.md",

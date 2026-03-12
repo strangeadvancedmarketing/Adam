@@ -693,3 +693,122 @@ If this throws, fix the config before SENTINEL restarts the gateway.
 >
 > **Add stderr capture to SENTINEL** so future crashes are self-diagnosing. Redirect
 > gateway output to a log file on launch — the reason will be in the first few lines.
+
+
+---
+
+## [2026-03-11] `memory_search` and `memory_get` return "Tool not found" despite memory-core plugin being registered
+
+### Symptom
+Adam calls `memory_search` or `memory_get` mid-session and receives:
+```
+Tool not found: memory_search
+```
+or the tool silently returns no results. The memory-core plugin appears registered
+(`plugins.entries.memory-core.enabled: true`), the gateway is running, SENTINEL
+shows no errors, and `openclaw memory status` reports the index is healthy.
+
+Everything looks correct. The tools still don't work.
+
+### Root Cause
+Two separate issues, both required to fix — either one alone leaves the tools broken.
+
+**Issue 1 — `agents.defaults.memorySearch.enabled` missing from `openclaw.json`**
+
+OpenClaw's `resolveMemoryToolContext` reads its configuration from
+`agents.defaults.memorySearch` — not from the plugin registry. When this block
+exists but has no `enabled: true` key, the function receives `cfg = undefined`
+and hits an early-exit guard:
+
+```javascript
+if (!cfg) return null;
+```
+
+Execution aborts before any plugin check or tool registration runs. The
+`plugins.entries.memory-core.enabled: true` key is read by a completely separate
+code path and has no effect on tool resolution. Both locations must have
+`enabled: true`.
+
+**Fix:** Add `"enabled": true` to the `agents.defaults.memorySearch` block in
+`openclaw.json`:
+
+```json
+"agents": {
+  "defaults": {
+    "memorySearch": {
+      "enabled": true,
+      "sources": ["memory", "sessions"],
+      ...
+    }
+  }
+}
+```
+
+**Issue 2 — Wrong package name for desktop-commander in `mcporter.json`**
+
+The `mcporter.json` desktop-commander entry used:
+```json
+"desktop-commander": {
+  "command": "desktop-commander",
+  "args": ["serve"]
+}
+```
+The package `desktop-commander` does not exist on npm under that name. mcporter
+fails silently — no crash, just "Tool not found" for every desktop-commander call.
+
+**Fix:** Use the correct npx invocation:
+```json
+"desktop-commander": {
+  "command": "npx",
+  "args": ["-y", "@wonderwhy-er/desktop-commander@latest"]
+}
+```
+
+**Issue 3 (same session) — Wrong module path for neural-memory**
+
+`neural_memory.mcp_server` does not exist. The correct module path is
+`neural_memory.mcp`. Using the wrong path causes a silent `ModuleNotFoundError`
+on mcporter daemon start — no crash visible in the gateway log.
+
+**Fix:**
+```json
+"neural-memory": {
+  "command": "python",
+  "args": ["-m", "neural_memory.mcp"],
+  ...
+}
+```
+
+### Why This Is Hard To Diagnose
+- The gateway does not crash. It runs normally with the tools simply absent.
+- `openclaw memory status` reports healthy — it checks the index, not tool registration.
+- `plugins.entries.memory-core.enabled: true` looks correct and is correct — it's just
+  not the config path that controls tool resolution.
+- mcporter failures are silent. No error in the gateway log, no process crash.
+- The symptom ("Tool not found") is identical for all three root causes.
+
+### How To Confirm The Fix
+After applying all three fixes and restarting the gateway:
+1. In an Adam session, call `memory_search` with any query
+2. It should return results (or "no results found" — not "Tool not found")
+3. `memory_get` should similarly resolve without error
+
+### Recovery Steps
+1. Edit `~/.openclaw/openclaw.json` — add `"enabled": true` to `agents.defaults.memorySearch`
+2. Edit `~/.mcporter/mcporter.json` — update desktop-commander to use `npx -y @wonderwhy-er/desktop-commander@latest`
+3. Edit `~/.mcporter/mcporter.json` — update neural-memory args to `["-m", "neural_memory.mcp"]`
+4. Kill the gateway process (SENTINEL restarts it automatically within 30 seconds)
+5. Restart mcporter daemon: `mcporter stop && mcporter start`
+6. Verify in next session
+
+### Key Insight
+> **OpenClaw has two separate config paths for memory: the plugin registry
+> (`plugins.entries`) and the tool resolver (`agents.defaults.memorySearch`).
+> They are independent. The plugin can be enabled while the tool resolver is
+> disabled, and the tools will silently not exist. Always set `enabled: true`
+> in both locations.**
+>
+> **mcporter silently swallows package resolution failures.** If any server in
+> `mcporter.json` has a bad command or package name, that server's tools vanish
+> with no visible error. When tools go missing, check `mcporter.json` package
+> names before anything else.
