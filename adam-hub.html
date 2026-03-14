@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adam Framework — Find Your Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0e;
+    --bg2: #111118;
+    --purple: #c850ff;
+    --cyan: #64c8ff;
+    --white: #f0f0f8;
+    --grey: #6a6a8a;
+    --card-bg: #13131f;
+    --card-border: #1e1e30;
+    --card-hover: #1a1a28;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--white); font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(200,80,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,80,255,0.03) 1px, transparent 1px); background-size: 80px 80px; pointer-events: none; z-index: 0; }
+  body::after { content: ''; position: fixed; top: -200px; right: -200px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(100,200,255,0.06) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+  header { padding: 48px 0 0; border-bottom: 1px solid var(--card-border); }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; padding-bottom: 32px; }
+  .wordmark { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.2em; color: var(--purple); text-transform: uppercase; }
+  .wordmark span { color: var(--grey); margin: 0 8px; }
+  .header-tag { font-size: 11px; color: var(--grey); letter-spacing: 0.1em; border: 1px solid var(--card-border); padding: 4px 10px; border-radius: 2px; }
+  .hero { padding: 80px 0 64px; }
+  .hero-eyebrow { font-size: 11px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+  .hero-eyebrow::before { content: ''; display: block; width: 32px; height: 1px; background: var(--cyan); }
+  .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(42px, 6vw, 72px); font-weight: 800; line-height: 1.0; letter-spacing: -0.02em; margin-bottom: 24px; }
+  .hero h1 em { font-style: normal; color: var(--purple); }
+  .hero-sub { font-size: 15px; color: var(--grey); line-height: 1.7; max-width: 560px; margin-bottom: 40px; }
+  .demo-block { background: var(--card-bg); border: 1px solid var(--card-border); border-left: 3px solid var(--purple); padding: 24px 28px; max-width: 620px; margin-bottom: 16px; animation: fadeUp 0.6s ease both; }
+  .demo-block.reply { border-left-color: var(--cyan); margin-left: 32px; animation-delay: 0.3s; }
+  .demo-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+  .demo-block .demo-label { color: var(--purple); }
+  .demo-block.reply .demo-label { color: var(--cyan); }
+  .demo-text { font-size: 13px; line-height: 1.7; color: var(--white); }
+  .demo-note { font-size: 11px; color: var(--grey); margin-top: 24px; letter-spacing: 0.05em; }
+  .section-label { font-size: 11px; letter-spacing: 0.2em; color: var(--grey); text-transform: uppercase; margin-bottom: 40px; padding-top: 64px; border-top: 1px solid var(--card-border); display: flex; align-items: center; gap: 16px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2px; margin-bottom: 2px; }
+  .card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 28px 32px; cursor: pointer; transition: background 0.2s, border-color 0.2s; text-decoration: none; color: inherit; display: block; position: relative; overflow: hidden; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--purple); transform: scaleY(0); transform-origin: bottom; transition: transform 0.2s; }
+  .card:hover { background: var(--card-hover); border-color: rgba(200,80,255,0.3); }
+  .card:hover::before { transform: scaleY(1); }
+  .card-persona { font-size: 10px; letter-spacing: 0.2em; color: var(--purple); text-transform: uppercase; margin-bottom: 10px; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.2; }
+  .card-pain { font-size: 12px; color: var(--grey); line-height: 1.6; margin-bottom: 16px; }
+  .card-exchange { background: rgba(0,0,0,0.3); border-left: 2px solid var(--cyan); padding: 12px 14px; font-size: 11px; line-height: 1.6; color: rgba(240,240,248,0.7); margin-bottom: 18px; }
+  .card-exchange strong { color: var(--cyan); font-weight: 500; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-price { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--white); }
+  .card-price.premium { color: var(--cyan); }
+  .card-cta { font-size: 11px; letter-spacing: 0.1em; color: var(--grey); text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: color 0.2s, gap 0.2s; }
+  .card:hover .card-cta { color: var(--purple); gap: 10px; }
+  .tier-label { font-size: 11px; letter-spacing: 0.15em; color: var(--grey); text-transform: uppercase; padding: 20px 0 12px; display: flex; align-items: center; gap: 12px; }
+  .tier-label::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
+  .tier-label.premium-tier { color: var(--cyan); }
+  .bottom { padding: 80px 0 60px; text-align: center; border-top: 1px solid var(--card-border); margin-top: 64px; }
+  .bottom h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+  .bottom p { font-size: 13px; color: var(--grey); margin-bottom: 32px; }
+  .bottom-badges { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+  .badge { font-size: 11px; letter-spacing: 0.1em; color: var(--grey); display: flex; align-items: center; gap: 6px; }
+  .badge::before { content: '✓'; color: var(--purple); font-weight: 700; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .cards .card { animation: fadeUp 0.4s ease both; }
+  .cards .card:nth-child(1) { animation-delay: 0.05s; }
+  .cards .card:nth-child(2) { animation-delay: 0.10s; }
+  .cards .card:nth-child(3) { animation-delay: 0.15s; }
+  .cards .card:nth-child(4) { animation-delay: 0.20s; }
+  .cards .card:nth-child(5) { animation-delay: 0.25s; }
+  .cards .card:nth-child(6) { animation-delay: 0.30s; }
+  .cards .card:nth-child(7) { animation-delay: 0.35s; }
+  .cards .card:nth-child(8) { animation-delay: 0.40s; }
+  .cards .card:nth-child(9) { animation-delay: 0.45s; }
+  .cards .card:nth-child(10) { animation-delay: 0.50s; }
+  .cards .card:nth-child(11) { animation-delay: 0.55s; }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="wordmark">Adam Framework <span>·</span> S.A.M.</div>
+      <div class="header-tag">Local AI. No cloud. No subscription.</div>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-eyebrow">Find your edition</div>
+      <h1>Your AI remembers.<br><em>You just talk.</em></h1>
+      <p class="hero-sub">Adam is a local AI agent that lives in your system tray and connects to your phone. No commands. No interface. Just talk — and Adam holds the context forever.</p>
+      <div class="demo-block">
+        <div class="demo-label">🎙 You — voice note, driving to the meeting</div>
+        <div class="demo-text">"Hey Adam, I'm pulling into the parking lot — Acme meeting in 5 minutes, what do I need?"</div>
+      </div>
+      <div class="demo-block reply">
+        <div class="demo-label">⚡ Adam</div>
+        <div class="demo-text">"Dave pushed back on price last time. You anchored to ROI and he softened. He mentioned Q2 budget closes March 31 — 18 days out. He's been quiet this week. He's close. Don't discount."</div>
+      </div>
+      <p class="demo-note">That context came from a voice note you sent three weeks ago. Adam kept it.</p>
+    </section>
+    <div class="section-label">Choose your vertical</div>
+    <div class="tier-label">Standard — $39</div>
+    <div class="cards">
+      <a class="card" href="https://strangemarket.gumroad.com/l/bhsqoq" target="_blank">
+        <div class="card-persona">I am a B2B Sales Rep</div>
+        <div class="card-title">The Deal Shadow</div>
+        <div class="card-pain">You forget what the prospect said last time. The objection you already handled. The timeline that slipped.</div>
+        <div class="card-exchange"><strong>You:</strong> "Heading into the Acme call — what do I need to know?"<br><strong>Adam:</strong> "Dave pushed back on price last time. Q2 budget closes in 18 days. He's close."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/bjvnas" target="_blank">
+        <div class="card-persona">I am a Startup Founder</div>
+        <div class="card-title">Startup Founder</div>
+        <div class="card-pain">You forgot what you committed to on Monday. Who said what in the board call. What you need before the investor meeting.</div>
+        <div class="card-exchange"><strong>You:</strong> "What's open with Marcus?"<br><strong>Adam:</strong> "Deck revision, the Sequoia intro you promised, and the NDA from the 4th."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/pugwzi" target="_blank">
+        <div class="card-persona">I am a Real Estate Agent</div>
+        <div class="card-title">The Real Estate Closer</div>
+        <div class="card-pain">You're juggling 12 buyers. You can't remember the Johnsons hate open floor plans or that the Nguyens went cold because of the neighbor situation.</div>
+        <div class="card-exchange"><strong>You:</strong> "Petersons showing in 5 — what do I need?"<br><strong>Adam:</strong> "Budget ceiling is firm at 680. Wife is the decision-maker. Lead with the kitchen."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/xrbdgl" target="_blank">
+        <div class="card-persona">I am an Engineering Manager</div>
+        <div class="card-title">Remote Lead</div>
+        <div class="card-pain">Your best developer has been quiet for two weeks. Smaller PRs. Slower responses. You noticed — but didn't track it. Now they're interviewing.</div>
+        <div class="card-exchange"><strong>You:</strong> "How's the team heading into sprint planning?"<br><strong>Adam:</strong> "Marcus has been quiet since March 3rd. Jordan mentioned being blocked twice. Two open blockers, 72 hours."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/gyfzs" target="_blank">
+        <div class="card-persona">I am a Creative Director</div>
+        <div class="card-title">Creative Director</div>
+        <div class="card-pain">The client hated that shade of blue 18 months ago. Your junior designer doesn't know. Now you're in a presentation watching it happen again.</div>
+        <div class="card-exchange"><strong>You:</strong> "Verizon presentation tomorrow — anything to flag?"<br><strong>Adam:</strong> "They shot down dark backgrounds in March. Jessica is the real decision-maker. She mentioned sustainability twice."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/gkvvqp" target="_blank">
+        <div class="card-persona">I am a Product Manager</div>
+        <div class="card-title">Product Visionary</div>
+        <div class="card-pain">A user said something in a support ticket 6 months ago that stopped you cold. You flagged it. You can't reconstruct the reasoning now.</div>
+        <div class="card-exchange"><strong>You:</strong> "What's the history on the notification redesign?"<br><strong>Adam:</strong> "Power users were muting the app entirely. You had a hunch in November this was a retention driver — wanted to validate in Q1."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/hbrga" target="_blank">
+        <div class="card-persona">I am a Fundraising Director</div>
+        <div class="card-title">Nonprofit Catalyst</div>
+        <div class="card-pain">Your major donor gave $50K last year. You don't remember they hate galas, their daughter started college, and the last ask felt transactional.</div>
+        <div class="card-exchange"><strong>You:</strong> "Give me everything on Patricia before this call."<br><strong>Adam:</strong> "Prefers 1-on-1s. Daughter started college in September. Lead with impact, not numbers."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/iixloz" target="_blank">
+        <div class="card-persona">I am a Solo Agency Owner</div>
+        <div class="card-title">Solo Agency Owner</div>
+        <div class="card-pain">You're the strategist, the account manager, and the person who takes the calls. By Wednesday you've forgotten what you promised on Monday.</div>
+        <div class="card-exchange"><strong>You:</strong> "Three client calls today — where do things stand?"<br><strong>Adam:</strong> "Brandworks is 3 weeks from launch, copy unapproved. Hartley proposal 12 days quiet — worth a check-in."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/ertjln" target="_blank">
+        <div class="card-persona">I am an Executive Coach</div>
+        <div class="card-title">Executive Coach</div>
+        <div class="card-pain">Your client had a breakthrough six sessions ago. Resistance crept back. Now you're in session 14 without the thread that connects it all.</div>
+        <div class="card-exchange"><strong>You:</strong> "Sarah in 20 minutes — where are we?"<br><strong>Adam:</strong> "Real shift in session 9 around failure. Performance review next week — live pressure. She may be reverting. Name the pattern early."</div>
+        <div class="card-footer"><div class="card-price">$39</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+    </div>
+    <div class="tier-label premium-tier" style="margin-top:32px;">Premium — $59</div>
+    <div class="cards">
+      <a class="card" href="https://strangemarket.gumroad.com/l/wtzif" target="_blank">
+        <div class="card-persona">I am a Legal Partner</div>
+        <div class="card-title">The Rainmaker</div>
+        <div class="card-pain">You know almost everything. "Almost" in your business is a liability. The referral you forgot to thank. The deposition detail that contradicts what your client said today.</div>
+        <div class="card-exchange"><strong>You:</strong> "Harmon mediation in 10 — what am I missing?"<br><strong>Adam:</strong> "Anchor is the insurance cap. Opposing counsel went quiet after March 2nd. Harmon's daughter's tuition deadline is May. He wants to close."</div>
+        <div class="card-footer"><div class="card-price premium">$59</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+      <a class="card" href="https://strangemarket.gumroad.com/l/dpvnj" target="_blank">
+        <div class="card-persona">I am an Investment Banker</div>
+        <div class="card-title">M&A Sentinel</div>
+        <div class="card-pain">The tell was there three weeks ago. The buyer's tone shifted. You felt it but couldn't prove it. Now the deal is cold.</div>
+        <div class="card-exchange"><strong>You:</strong> "Where are we with the Carlyle group?"<br><strong>Adam:</strong> "Response times doubled after March 3rd. Dropped the word 'committed.' No due diligence question in 11 days. They may be stalling for a price reduction."</div>
+        <div class="card-footer"><div class="card-price premium">$59</div><div class="card-cta">Get Adam →</div></div>
+      </a>
+    </div>
+    <section class="bottom">
+      <h2>One-time setup. Runs forever.</h2>
+      <p>Double-click Adam.exe. Pick your messaging app. Answer 5 questions. Live in under 10 minutes.</p>
+      <div class="bottom-badges">
+        <div class="badge">100% Local — no cloud</div>
+        <div class="badge">No subscription</div>
+        <div class="badge">Works on Telegram, WhatsApp, Slack, Discord</div>
+        <div class="badge">Windows 10/11</div>
+        <div class="badge">One-time payment</div>
+      </div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

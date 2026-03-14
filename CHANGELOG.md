@@ -2,76 +2,62 @@
 
 All notable changes to the Adam Framework are documented here.
 
-Format: `[version] — date — description`
+## [2026.3] — March 2026
+
+### Added
+- Gumroad product line: 11 vertical-specific Adam editions live (Deal Shadow, Startup Founder, Real Estate Closer, Rainmaker, M&A Sentinel, Remote Lead, Creative Director, Product Visionary, Nonprofit Catalyst, Solo Agency Owner, Executive Coach)
+- `adam-hub.html` — hub page for vertical selection ("Which Adam is right for you?")
+- `generate_obsidian_links.py` — Obsidian graph generator from nmem neural graph
+- `FOR_AI_VISITORS.md` — context file written specifically for AI agents reading the repo
+- OpenClaw skills PR (#152) submitted to canonical skills registry
+
+### Fixed
+- Correct Gumroad badge URL (bjvnas slug)
+- Template configs corrected; memory_search/tool resolution bug documented in LESSONS_LEARNED.md
+- AdamsVault renamed from `C:\Adam's Vault` to `C:\AdamsVault` — apostrophe eliminated across 52 files
+
+### Changed
+- Neural graph: 16,200 neurons / 47,871 synapses (from 12,393 / 40,532)
+- OpenClaw updated to 2026.3.2
 
 ---
 
-## [v1.0-stable] — 2026-03-06
-
-**Full system audit. All 5 layers verified operational.**
+## [2026.2] — February 2026
 
 ### Added
-- `AUDIT.md` — full system audit results (5 layers, 33/33 tests, paths, disk state)
-- `CHANGELOG.md` — this file
-- `LICENSE` — MIT license file (was in README badge only, now properly detected by GitHub)
-- `TOPIC_INDEX.template.md` — populated with correct schema (was empty at launch)
-- `reconcile_memory.py` Part 8 — TOPIC_INDEX confidence auto-update (HIGH/MEDIUM/LOW based on last_touched age)
+- Layer 5 coherence monitor (`coherence_monitor.py`) — 33/33 tests passing on live data
+- `reconcile_memory.py` nightly sleep cycle (Gemini-powered consolidation)
+- memory-core plugin enabled — gives Adam `memory_search` and `memory_get` mid-session
+- Hybrid vector + text search (BM25 + vector, 70/30 split)
+- SENTINEL.ps1 watchdog — auto-restart, sleep cycle, boot context compilation
+- Session 000 seeding workflow (`legacy_importer.py` + `ingest_triples.ps1`)
+- Complete nuclear reset survived Feb 14–16, 2026 — identity restored in under an hour
 
 ### Fixed
-- TOPIC_INDEX.template.md was committed empty — now contains full schema with placeholders
-- AdamsVault migrated from F: to C: drive on reference machine — all SENTINEL paths confirmed clean
-
-### Verified
-- coherence_monitor test suite: 33/33 passing
-- All 31 documented repo files present and populated
-- Layer 5 coherence monitor active against live session data
+- Gateway silent failure on bad config (documented in LESSONS_LEARNED.md)
+- Kokoro TTS crashes resolved by migrating to Edge TTS
 
 ---
 
-## [v0.9-showcase] — 2026-03-05
-
-**Public showcase launch.**
+## [2026.1] — January 2026
 
 ### Added
-- `SHOWCASE.md` — community deployments, add yours
-- `showcase/ai-amnesia-solved.html` — interactive data visualization (353 sessions, 6,619 turns)
-- GitHub Pages deployment via `.github/workflows/deploy.yml`
-- GitHub Discussions enabled
-- Roadmap issue pinned
-- Linux/macOS SENTINEL port marked as good first issue
-
-### Fixed
-- Narrative consistency pass across all docs (405 fix)
+- Initial 5-layer architecture design and implementation
+- Layer 1: Vault injection via SENTINEL bootstrap
+- Layer 2: memory-core plugin (memory_search / memory_get)
+- Layer 3: nmem neural graph (SQLite, associative recall)
+- Layer 4: nightly reconciliation prototype
+- SOUL.md / CORE_MEMORY.md / BOOT_CONTEXT.md vault template system
+- SETUP_HUMAN.md and SETUP_AI.md dual onboarding paths
+- adam-skills companion repo with 8 skills (weather, news, email-intelligence, inner-eye, etc.)
 
 ---
 
-## [v0.8-public] — 2026-03-03
+## [2025.7–12] — July–December 2025
 
-**Initial public release.**
-
-### Added
-- Full 5-layer architecture documented and templated
-- `SETUP_HUMAN.md` + `SETUP_AI.md` — dual onboarding paths
-- `engine/` — SENTINEL, gateway config, mcporter templates
-- `vault-templates/` — SOUL, CORE_MEMORY, BOOT_SEQUENCE, coherence schemas, active-context
-- `tools/` — legacy_importer, ingest_triples, reconcile_memory, coherence_monitor, test suite
-- `docs/` — ARCHITECTURE, CONFIG_REFERENCE, PROOF, SETUP, CONTEXT_COMPILER, SWARM, SKILLS_SYSTEM, LESSONS_LEARNED, LINEAGE, LINEAGE_EXTENDED
-- `CONTRIBUTING.md`, `ROADMAP.md`
-- 19 GitHub topics for discoverability
-
-## [v1.1.1] — 2026-03-08
-
-**Production bug fixes caught by fresh-eyes repo audit.**
-
-### Fixed
-- `engine/openclaw.template.json` — `channels.telegram.streamMode` renamed to `streaming` (deprecated key)
-- `engine/openclaw.template.json` — `messages.tts.auto` changed from `"always"` to `"tagged"` (prevents Telegram 429 rate limit cascade on new installs)
-- `engine/SENTINEL.template.ps1` — coherence check log messages aligned to match live system output (`"Coherence check: exit 0"` / `"Coherence check: drift detected"`)
-- `docs/CONFIG_REFERENCE.md` — TTS example updated to `"tagged"`, added explicit warning against `"always"`, added `streaming` key to Telegram example with deprecation note
-- `README.md` — boot log example corrected to match actual SENTINEL output
-- `SETUP_HUMAN.md` + `SETUP_AI.md` — added troubleshooting entry for `skills` key crash loop (gateway exits immediately with `Config invalid: Unrecognized key`)
-- GitHub repo About description updated from "4-layer" to "5-layer" (was showing stale info in link previews)
-
-### Added
-- `docs/LESSONS_LEARNED.md` — full entry for 2026-03-08 `skills` key crash loop: symptom, root cause, stderr capture diagnostic, fix, and key insight
-
+### Foundation
+- Project inception: solving AI amnesia for production business use
+- 353 sessions across 8 months of development
+- 6,619 message turns logged
+- 4 model migrations survived
+- Three-AI methodology established: Claude (builder), Gemini (philosopher), Jereme (orchestrator)

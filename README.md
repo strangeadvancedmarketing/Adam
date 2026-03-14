@@ -9,6 +9,9 @@
   <a href="docs/LINEAGE_EXTENDED.md"><img src="https://img.shields.io/badge/📖%20The%20Story-8%20Months-green?style=for-the-badge" alt="The Story"></a>
   <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge" alt="MIT License">
   <a href="https://strangemarket.gumroad.com/l/adam-framework"><img src="https://img.shields.io/badge/%E2%9A%A1%20Fast--Track%20Setup-%2449-ff90e8?style=for-the-badge" alt="Fast-Track Setup"></a>
+  <img src="https://img.shields.io/github/stars/strangeadvancedmarketing/Adam?style=for-the-badge&color=gold" alt="GitHub Stars">
+  <img src="https://img.shields.io/github/forks/strangeadvancedmarketing/Adam?style=for-the-badge&color=blue" alt="GitHub Forks">
+  <img src="https://img.shields.io/github/last-commit/strangeadvancedmarketing/Adam?style=for-the-badge" alt="Last Commit">
 </p>
 
 <p align="center">
@@ -131,7 +134,7 @@ The machine crashes. The vendor goes down. You switch models. You come back. The
 |  LAYER 3: NEURAL GRAPH                                   |
 |  Associative recall, not keyword search.                 |
 |  Concepts link to concepts. Context propagates.          |
-|  12,393 neurons / 40,532 synapses and growing.           |
+|  16,200 neurons / 47,871 synapses and growing.           |
 +----------------------------------------------------------+
 |  LAYER 4: NIGHTLY RECONCILIATION                         |
 |  Gemini merges daily logs into CORE_MEMORY.md.           |
@@ -186,8 +189,8 @@ Validated in production, not a lab:
 |--------|-------|
 | Total sessions | 353 |
 | Message turns | 6,619 |
-| Neural graph neurons | 12,393 |
-| Neural graph synapses | 40,532 |
+| Neural graph neurons | 16,200 |
+| Neural graph synapses | 47,871 |
 | Model migrations survived | 4 |
 | System rebuilds survived | 1 (complete nuclear reset, February 14-16, 2026) |
 | Identity preserved through all of it | Yes |
@@ -206,6 +209,7 @@ Full story: [docs/PROOF.md](docs/PROOF.md) · How it was built: [docs/LINEAGE.md
 ```
 adam-framework/
 ├── README.md
+├── CHANGELOG.md               <- Version history — what changed and when
 ├── CONTRIBUTING.md            <- How to contribute
 ├── SHOWCASE.md                <- Community deployments — add yours
 ├── SETUP_HUMAN.md             <- Human guide: you have OpenClaw, now give it a soul
