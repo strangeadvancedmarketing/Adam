@@ -342,6 +342,31 @@ cd adam-skills
 
 ---
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=strangeadvancedmarketing/Adam&type=Date)](https://star-history.com/#strangeadvancedmarketing/Adam&Date)
+
+---
+
+## Citation
+
+If you use the Adam Framework in research or reference it in a paper, please cite:
+
+```bibtex
+@software{strange2026adam,
+  author    = {Strange, Jereme},
+  title     = {Adam Framework: 5-Layer Persistent Memory, Coherence, and Identity Architecture for Local AI Agents},
+  year      = {2026},
+  publisher = {Strange Advanced Marketing},
+  url       = {https://github.com/strangeadvancedmarketing/Adam},
+  note      = {Production-validated over 353 sessions, 6619 message turns.
+               Key finding: scratchpad dropout as signal for within-session
+               coherence degradation in long-context LLM deployments.}
+}
+```
+
+---
+
 ## License
 
 MIT. Use it, build on it, ship it.
