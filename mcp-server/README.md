@@ -47,7 +47,7 @@ pip install mcp
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADAM_VAULT_PATH` | `~/AdamsVault/workspace` | Path to your Adam vault workspace directory |
+| `ADAM_VAULT_PATH` | `~/vault` | Path to your Adam vault workspace directory |
 
 ## About
 
@@ -55,4 +55,5 @@ The Adam Framework is a 5-layer persistent memory and identity architecture for 
 The memory lives in plain markdown files you own. The model is just the reader.
 
 [Full framework →](https://github.com/strangeadvancedmarketing/Adam)
+
 
