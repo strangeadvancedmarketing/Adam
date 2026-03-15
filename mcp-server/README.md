@@ -21,9 +21,9 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "adam-memory": {
       "command": "python",
-      "args": ["C:/path/to/adam-mcp-server/server.py"],
+      "args": ["C:/path/to/mcp-server/server.py"],
       "env": {
-        "ADAM_VAULT_PATH": "C:/AdamsVault/workspace"
+        "ADAM_VAULT_PATH": "C:/path/to/your/vault"
       }
     }
   }
@@ -34,7 +34,7 @@ Add to your `claude_desktop_config.json`:
 
 ```bash
 docker build -t adam-mcp .
-docker run -e ADAM_VAULT_PATH=/vault -v C:/AdamsVault/workspace:/vault adam-mcp
+docker run -e ADAM_VAULT_PATH=/vault -v C:/path/to/your/vault:/vault adam-mcp
 ```
 
 ### Install dependencies
@@ -55,3 +55,4 @@ The Adam Framework is a 5-layer persistent memory and identity architecture for 
 The memory lives in plain markdown files you own. The model is just the reader.
 
 [Full framework →](https://github.com/strangeadvancedmarketing/Adam)
+
