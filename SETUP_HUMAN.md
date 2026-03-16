@@ -1,7 +1,8 @@
 # Human Setup Guide — Adam Framework
 
-> **Starting line:** You have OpenClaw installed and a model talking to you.
-> That's all this assumes. This guide gives your AI a persistent soul, memory, and identity.
+> **New to OpenClaw?** Adam runs on top of it — it's the open-source AI agent runtime this framework is built on. Get it first: [github.com/openclaw/openclaw](https://github.com/openclaw/openclaw) — free, MIT licensed, any OS. One command: ``npm install -g openclaw@latest`` then ``openclaw onboard``. Takes about 10 minutes. Then come back here.
+>
+> **Already have OpenClaw running?** You're at the starting line. This guide gives your AI a persistent soul, memory, and identity.
 
 ---
 
