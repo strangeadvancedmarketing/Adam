@@ -77,4 +77,6 @@ Get the full Adam Framework configured and running on your machine. Includes vau
 The Adam Framework is a 5-layer persistent memory and identity architecture for local AI agents.
 The memory lives in plain markdown files you own. The model is just the reader.
 
+Built on [OpenClaw](https://github.com/openclaw/openclaw) — the open-source AI agent runtime with 316K+ GitHub stars, acquired by OpenAI in February 2026. **This MCP server works standalone with any markdown folder — no OpenClaw required.** The full Adam Framework requires OpenClaw.
+
 [Full framework →](https://github.com/strangeadvancedmarketing/Adam)
