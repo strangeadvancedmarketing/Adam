@@ -1,0 +1,11 @@
+name: adam-framework
+version: 1.0.0
+description: "MCP server giving Claude Desktop and any MCP client persistent memory from a local vault. Works with Obsidian vaults or any markdown folder. Solves AI amnesia."
+transport: stdio
+build:
+  command: pip install adam-mcp
+  start: python -m adam_mcp
+config:
+  - name: ADAM_VAULT_PATH
+    description: Path to your vault directory (markdown files). Default ~/AdamsVault/workspace. Works with any Obsidian vault.
+    required: false
