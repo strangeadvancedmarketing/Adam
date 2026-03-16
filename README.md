@@ -285,7 +285,7 @@ Your AI wakes up already knowing your history. Every decision, tool, project, an
 ## Prerequisites
 
 - Windows 10/11, macOS, or Linux
-- [OpenClaw](https://openclaw.ai) already installed and running
+- **[OpenClaw](https://github.com/openclaw/openclaw)** — the open-source AI agent runtime Adam runs on. 316K+ stars, MIT licensed, any OS. If you don't have it yet: `npm install -g openclaw@latest` then `openclaw onboard`
 - [Python 3.10+](https://python.org)
 - [mcporter](https://www.npmjs.com/package/mcporter): npm install -g mcporter
 - An LLM API key — [NVIDIA Developer free tier](https://build.nvidia.com) is recommended (Kimi K2.5, 131K context, free)
