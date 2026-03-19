@@ -13,12 +13,17 @@ All notable changes to the Adam Framework are documented here.
 
 ### Fixed
 - Correct Gumroad badge URL (bjvnas slug)
-- Template configs corrected; memory_search/tool resolution bug documented in LESSONS_LEARNED.md
+- **`memory_search` / `memory_get` permanently fixed** — root cause: `memory-core` plugin was passing `ctx.config` (empty plugin config) instead of `api.config` (full gateway config) to tool factory. One-line patch to `extensions/memory-core/index.ts`. Tools now register and return results in every session. Full writeup in LESSONS_LEARNED.md.
+- SENTINEL health check endpoint corrected (`/health` instead of canvas URL) — faster boot, reliable reindex trigger
+- Deferred vector reindex added to SENTINEL — no longer silently skipped if gateway takes >90s to boot
 - AdamsVault renamed from `C:\Adam's Vault` to `C:\AdamsVault` — apostrophe eliminated across 52 files
+- mcporter daemon keep-alive added for neural-memory — auto-starts on every SENTINEL boot
 
 ### Changed
-- Neural graph: 16,200 neurons / 47,871 synapses (from 12,393 / 40,532)
-- OpenClaw updated to 2026.3.2
+- Neural graph: 16,200 neurons / 47,874 synapses (from 12,393 / 40,532)
+- neural-memory updated v2.13.0 → v4.12.0
+- OpenClaw updated to 2026.3.13
+- adam-framework published to ClawHub as v1.0.1
 
 ---
 

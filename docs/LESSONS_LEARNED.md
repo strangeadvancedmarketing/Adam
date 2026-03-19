@@ -812,3 +812,121 @@ After applying all three fixes and restarting the gateway:
 > `mcporter.json` has a bad command or package name, that server's tools vanish
 > with no visible error. When tools go missing, check `mcporter.json` package
 > names before anything else.
+
+
+---
+
+## [2026-03-19] `memory_search` / `memory_get` — permanent fix via `api.config` patch
+
+### Symptom
+`memory_search` and `memory_get` return "Tool not found" in every session.
+The memory-core plugin shows status `loaded` in the gateway plugin table.
+`openclaw memory status --deep` reports the index healthy with 314+ files and vector ready.
+Everything looks correct at the config level — `agents.defaults.memorySearch.enabled: true`,
+`plugins.entries.memory-core.enabled: true`. Tools still don't bind.
+
+### Root Cause
+The memory-core plugin (`extensions/memory-core/index.ts`) uses `emptyPluginConfigSchema()`
+as its config schema — meaning it intentionally has no plugin-level config of its own.
+
+The problem: inside the plugin's `registerTool` factory, the code passed `ctx.config`
+to `createMemorySearchTool` and `createMemoryGetTool`:
+
+```typescript
+const memorySearchTool = api.runtime.tools.createMemorySearchTool({
+  config: ctx.config,        // ← WRONG: ctx.config is the empty plugin config
+  agentSessionKey: ctx.sessionKey,
+});
+```
+
+`ctx.config` is the plugin's own config object — which is empty by design because of
+`emptyPluginConfigSchema()`. When `createMemorySearchTool` receives this empty object,
+it passes it to `resolveMemoryToolContext`, which calls `resolveMemorySearchConfig(cfg, agentId)`.
+That function hits:
+
+```javascript
+const defaults = cfg.agents?.defaults?.memorySearch;  // → undefined on empty config
+const resolved = mergeConfig(defaults, overrides, agentId);
+if (!resolved.enabled) return null;  // → returns null, tool not registered
+```
+
+The tool factory returns `null`, the tool never binds. No error is logged.
+
+The full gateway config — which does have `agents.defaults.memorySearch.enabled: true` —
+lives on `api.config`, not `ctx.config`. These are two different objects.
+
+### Why This Persisted So Long
+- `emptyPluginConfigSchema` is the correct design choice — memory-core doesn't need
+  plugin-level config. The bug is that the tool factory used the wrong config source.
+- The plugin shows `loaded` in the gateway table because loading and tool registration
+  are separate steps. A plugin can load successfully while registering zero tools.
+- No error is thrown or logged when a tool factory returns null. Silent drop.
+- `openclaw memory status` checks the index, not tool registration. Always reports healthy.
+- The `agents.defaults.memorySearch.enabled: true` config IS correct and IS read —
+  just not via the path the plugin was using.
+
+### Fix
+One-line change in `extensions/memory-core/index.ts` — use `api.config` instead of
+`ctx.config` for both tool calls:
+
+```typescript
+// BEFORE (broken)
+const memorySearchTool = api.runtime.tools.createMemorySearchTool({
+  config: ctx.config,
+  agentSessionKey: ctx.sessionKey,
+});
+const memoryGetTool = api.runtime.tools.createMemoryGetTool({
+  config: ctx.config,
+  agentSessionKey: ctx.sessionKey,
+});
+
+// AFTER (correct)
+const memorySearchTool = api.runtime.tools.createMemorySearchTool({
+  config: api.config,
+  agentSessionKey: ctx.sessionKey,
+});
+const memoryGetTool = api.runtime.tools.createMemoryGetTool({
+  config: api.config,
+  agentSessionKey: ctx.sessionKey,
+});
+```
+
+`api.config` is the full gateway config object. `ctx.config` is the plugin's own
+config — empty for any plugin using `emptyPluginConfigSchema`.
+
+### Confirmed Working
+After applying the fix and restarting the gateway, `memory_search` returned 5 results
+in a fresh session, with hybrid search (semantic + keyword), provider openai/nvidia/nv-embed-v1,
+and session transcripts indexed and searchable.
+
+### Recovery Steps
+1. Edit `C:\Users\ajsup\AppData\Roaming\npm\node_modules\openclaw\extensions\memory-core\index.ts`
+2. Replace both `config: ctx.config` with `config: api.config`
+3. Kill the gateway (SENTINEL restarts automatically)
+4. Start a fresh session (`/new` in Telegram)
+5. Run `memory_search query:"test"` — should return results, not "tool not found"
+
+### Critical Warning — openclaw Updates Will Overwrite This Fix
+The patched file is in `node_modules`. Any `npm update openclaw` or reinstall will
+overwrite `memory-core/index.ts` and break `memory_search` again.
+
+**After every openclaw update, re-apply the patch:**
+```powershell
+# Check if patch is still in place
+Select-String -Path "C:\Users\ajsup\AppData\Roaming\npm\node_modules\openclaw\extensions\memory-core\index.ts" -Pattern "api\.config"
+# If no output → patch was overwritten → re-apply it
+```
+
+A backup of the patched file is kept at:
+`C:\Users\ajsup\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts`
+
+### Key Insight
+> **`ctx.config` and `api.config` are not the same object in the OpenClaw plugin API.**
+> `api.config` is the full gateway config. `ctx.config` is the plugin's own config block.
+> For plugins using `emptyPluginConfigSchema`, `ctx.config` is intentionally empty.
+> Any plugin tool that needs to read `agents.defaults.*` must use `api.config`.
+>
+> A plugin loading successfully does not mean its tools registered. Loading and tool
+> registration are independent steps. Always verify with `memory_search query:"test"`
+> in a fresh session — not with `openclaw memory status` or the plugin table.
+
