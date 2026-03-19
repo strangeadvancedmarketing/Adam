@@ -80,10 +80,10 @@ The Adam Framework solves both problems at the architecture level with 5 complem
 
 **What it solves:** The difference between knowing a fact and understanding its context. The neural graph gives the AI the associative web — "this project is related to that person is related to this constraint" — that structured files alone can't provide.
 
-**At scale (production numbers):**
-- 12,393 neurons
-- 40,532 synapses
-- 353 sessions of accumulated knowledge
+**At scale (production numbers as of March 2026):**
+- 16,200 neurons
+- 47,874 synapses
+- 353+ sessions of accumulated knowledge
 
 ---
 
@@ -145,6 +145,9 @@ The public repo copy lives in `tools/` — copy it to your Vault's `tools/` dire
 SESSION START
      │
      ▼
+SENTINEL starts mcporter daemon (neural-memory keep-alive)
+     │
+     ▼
 SENTINEL checks if sleep cycle ran in last 6 hours
      │
      ├─ Yes → skip reconcile
@@ -161,14 +164,15 @@ SENTINEL writes TODAY.md + compiles BOOT_CONTEXT.md
 Gateway starts → OpenClaw injects BOOT_CONTEXT.md
      │
      ▼
-Gateway health check passes → vector reindex runs (CLI: openclaw memory index)
+Gateway health check (GET /health) passes → deferred vector reindex runs
+     If health check times out (>90s), reindex is retried every 30s until gateway is healthy
      Syncs vector store with anything written by the offline reconcile
      │
      ▼
 AI reads TODAY.md + daily log (Layer 1)
      │
      ▼
-AI calls nmem_context → neural graph surfaces relevant memories (Layer 3)
+AI calls nmem_context via mcporter → neural graph surfaces relevant memories (Layer 3)
      │
      ▼
 AI is fully loaded. Session begins.

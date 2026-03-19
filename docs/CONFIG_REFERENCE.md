@@ -69,6 +69,36 @@ This must match the provider name and model id you set in the `models` block abo
 
 ---
 
+## agents.defaults.memorySearch — Native Memory Tools
+
+```json
+"memorySearch": {
+  "enabled": true,
+  "provider": "openai",
+  "model": "nvidia/nv-embed-v1",
+  "remote": {
+    "baseUrl": "https://integrate.api.nvidia.com/v1",
+    "apiKey": "YOUR_LLM_API_KEY"
+  },
+  "sources": ["memory", "sessions"],
+  "extraPaths": [...]
+}
+```
+
+> **CRITICAL:** `"enabled": true` is required here. This is a separate config path from `plugins.entries.memory-core.enabled` — both must be set. If this field is missing or false, `memory_search` and `memory_get` will silently not register as tools in any session, even though the plugin shows as `loaded` in the gateway log. See LESSONS_LEARNED.md [2026-03-19] for the full root cause.
+
+| Field | Required | What it is |
+|-------|----------|------------|
+| `enabled` | **YES** | Must be `true`. Controls tool registration, not just plugin loading. |
+| `provider` | **YES** | Embedding provider. Use `"openai"` for OpenAI-compatible APIs (including NVIDIA). |
+| `model` | **YES** | Embedding model ID. Must match what your provider supports. |
+| `remote.baseUrl` | **YES** | Your embedding provider's API endpoint. |
+| `remote.apiKey` | **YES** | Your embedding provider API key. Can be the same as `LLM_API_KEY`. |
+| `sources` | No | What to index. `"memory"` = Vault files, `"sessions"` = session transcripts. |
+| `extraPaths` | **YES** | Paths to your Vault files. See section below. |
+
+---
+
 ## agents.defaults.memorySearch.extraPaths — Vault Connection
 
 ```json
