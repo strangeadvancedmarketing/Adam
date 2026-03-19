@@ -1,4 +1,4 @@
-# The Adam Framework
+﻿# The Adam Framework
 ### Your AI's memory should outlive any model, any vendor, any failure.
 #### AI Amnesia — Solved. Coherence Degradation — Solved. Identity Sovereignty — Built In.
 
@@ -171,7 +171,7 @@ This is a SENTINEL boot — the AI coming online with full context before you sa
 
 Adam: Morning. TurfTracker has three contractor leads in the queue from last night —
 Doctor Paver Corp looks strongest, no website, active on Reddit. Sleep cycle ran at
-02:14, merged 6 session logs into CORE_MEMORY. Neural graph at 12,393 neurons.
+02:14, merged 6 session logs into CORE_MEMORY. Neural graph at 16,200 neurons.
 What are we working on first?
 ```
 
@@ -379,4 +379,5 @@ Jereme Strange — Strange Advanced Marketing
 Miami, FL
 
 *No CS degree. No research team. No GPU cluster. Just a problem that needed solving.*
+
 
