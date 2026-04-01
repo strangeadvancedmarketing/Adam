@@ -101,6 +101,12 @@ It solves three problems that every other solution leaves on the table:
 
 ---
 
+## Desktop Companion
+
+A lightweight Electron overlay that sits on top of your desktop showing live SENTINEL status, neural graph stats, and session info. Always-on-top, click-through transparent, zero friction. It bridges gateway events to a visual HUD so you can see Adam working without switching windows. Details in [companion/README.md](companion/README.md).
+
+---
+
 ## What Changes
 
 **Day 1**

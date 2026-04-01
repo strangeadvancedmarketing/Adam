@@ -2,6 +2,13 @@
 
 All notable changes to the Adam Framework are documented here.
 
+## [2026.4] — April 2026
+
+### Added
+- **Desktop Companion overlay** — Electron-based always-on-top HUD displaying SENTINEL status, neural graph stats, and session info. Bridges gateway events to a transparent desktop widget via `gateway-bridge.js`. See `companion/README.md`.
+
+---
+
 ## [2026.3] — March 2026
 
 ### Added

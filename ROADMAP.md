@@ -38,6 +38,8 @@ The core framework is complete and production-validated.
 - ✅ **MCP Registry listing** — `io.github.strangeadvancedmarketing/adam-framework` live
 - ✅ **Linux / macOS port of SENTINEL** — `engine/SENTINEL.template.sh` + `tools/ingest_triples.sh` + `engine/com.adamframework.sentinel.plist`
 
+- ✅ **Desktop Companion overlay** — Electron-based transparent HUD showing SENTINEL status, neural graph stats, and session info. Always-on-top widget with gateway event bridge.
+
 ---
 
 ## Near Term 🔄 📋
@@ -162,4 +164,4 @@ you control. That's the foundation everything else is built on.
 
 ---
 
-*Last updated: March 19, 2026*
+*Last updated: April 1, 2026*
