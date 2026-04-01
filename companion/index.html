@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adam Companion</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      background: transparent;
+      overflow: hidden;
+      width: 300px;
+      height: 420px;
+      user-select: none;
+    }
+
+    #app {
+      width: 300px;
+      height: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 12px;
+    }
+
+    /* Status bar — shows vault health */
+    #status-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px;
+      color: #A0AEC0;
+    }
+
+    .status-pill {
+      background: rgba(45, 55, 72, 0.85);
+      border-radius: 8px;
+      padding: 3px 8px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .status-pill.online { color: #68D391; }
+    .status-pill.offline { color: #FC8181; }
+
+    /* Speech bubble */
+    #bubble {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 14px;
+      padding: 10px 14px;
+      max-width: 240px;
+      min-width: 120px;
+      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a202c;
+      line-height: 1.4;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.12);
+      position: relative;
+      margin-bottom: 6px;
+      word-break: break-word;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: opacity 0.3s ease;
+    }
+
+    #bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 9px solid rgba(255, 255, 255, 0.95);
+    }
+
+    /* Robot container */
+    #robot {
+      cursor: grab;
+      width: 120px;
+      height: 150px;
+      position: relative;
+      flex-shrink: 0;
+      animation: bob 3s ease-in-out infinite;
+    }
+
+    #robot:active { cursor: grabbing; }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-6px); }
+    }
+
+    /* Antenna */
+    .antenna-base {
+      position: absolute; top: 4px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px; height: 22px;
+      background: #4A5568; border-radius: 2px;
+    }
+
+    .antenna-tip {
+      position: absolute; top: 0px; left: 50%;
+      transform: translateX(-50%);
+      width: 10px; height: 10px;
+      background: #D69E2E; border-radius: 50%;
+      box-shadow: 0 0 8px #D69E2E;
+      animation: pulse-tip 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-tip {
+      0%, 100% { box-shadow: 0 0 6px #D69E2E; opacity: 1; }
+      50%       { box-shadow: 0 0 14px #ECC94B; opacity: 0.7; }
+    }
+
+    /* Body — darker, gold accent for Adam */
+    .body {
+      position: absolute; top: 26px; left: 50%;
+      transform: translateX(-50%);
+      width: 82px; height: 88px;
+      background: #1A202C;
+      border-radius: 18px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+      border: 1px solid #2D3748;
+    }
+
+    /* Screen/face — gold for Adam identity */
+    .screen {
+      position: absolute; top: 14px; left: 50%;
+      transform: translateX(-50%);
+      width: 60px; height: 44px;
+      background: #D69E2E;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 12px rgba(214, 158, 46, 0.4);
+    }
+
+    .eye {
+      width: 12px; height: 12px;
+      background: white; border-radius: 50%;
+      position: relative;
+      animation: blink 4s ease-in-out infinite;
+    }
+
+    .eye::after {
+      content: ''; position: absolute;
+      bottom: 2px; right: 2px;
+      width: 4px; height: 4px;
+      background: #1A202C; border-radius: 50%;
+      animation: look-around 8s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 90%, 100% { transform: scaleY(1); }
+      94%            { transform: scaleY(0.08); }
+    }
+
+    @keyframes look-around {
+      0%, 70%, 100% { transform: translate(0, 0); }
+      75%           { transform: translate(3px, -1px); }
+      85%           { transform: translate(-3px, 0); }
+      92%           { transform: translate(0, 2px); }
+    }
+
+    /* Idle animations */
+    #robot.idle {
+      animation: bob 3s ease-in-out infinite, curious-tilt 12s ease-in-out infinite;
+    }
+
+    @keyframes curious-tilt {
+      0%, 85%, 100% { transform: translateY(0px) rotate(0deg); }
+      88%           { transform: translateY(-4px) rotate(4deg); }
+      92%           { transform: translateY(-2px) rotate(-3deg); }
+    }
+
+    @keyframes antenna-wiggle {
+      0%, 80%, 100% { transform: translateX(-50%) rotate(0deg); }
+      83%           { transform: translateX(-50%) rotate(12deg); }
+      86%           { transform: translateX(-50%) rotate(-10deg); }
+      89%           { transform: translateX(-50%) rotate(6deg); }
+      92%           { transform: translateX(-50%) rotate(0deg); }
+    }
+
+    #robot.idle .antenna-base { animation: antenna-wiggle 7s ease-in-out infinite; }
+
+    /* Active state — screen glows brighter */
+    #robot.active .screen {
+      background: #ECC94B;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 18px rgba(236, 201, 75, 0.6);
+    }
+
+    /* Error state — red screen */
+    #robot.error .screen {
+      background: #FC8181;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 18px rgba(252, 129, 129, 0.6);
+    }
+
+    /* Chest panel — "A" badge for Adam */
+    .chest {
+      position: absolute; bottom: 12px; left: 50%;
+      transform: translateX(-50%);
+      width: 42px; height: 14px;
+      background: #2D3748; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: monospace; font-size: 10px; font-weight: bold;
+      color: #D69E2E; letter-spacing: 2px;
+    }
+
+    /* Arms */
+    .arm {
+      position: absolute; top: 38px;
+      width: 14px; height: 44px;
+      background: #1A202C; border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border: 1px solid #2D3748;
+    }
+    .arm.left  { left: 8px; transform: rotate(6deg); }
+    .arm.right { right: 8px; transform: rotate(-6deg); }
+
+    .hand {
+      position: absolute; bottom: -8px; left: 50%;
+      transform: translateX(-50%);
+      width: 14px; height: 14px;
+      background: #4A5568; border-radius: 50%;
+    }
+
+    /* Legs */
+    .legs {
+      position: absolute; top: 112px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 10px;
+    }
+
+    .leg {
+      width: 16px; height: 26px;
+      background: #1A202C; border-radius: 6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border: 1px solid #2D3748;
+    }
+
+    .foot {
+      width: 20px; height: 10px;
+      background: #4A5568; border-radius: 5px;
+      margin-top: 2px; margin-left: -2px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="status-bar">
+      <span id="gateway-status" class="status-pill offline">GW: --</span>
+      <span id="neural-status" class="status-pill">N: --</span>
+    </div>
+
+    <div id="bubble">Adam standing by...</div>
+
+    <div id="robot" class="idle">
+      <div class="antenna-base">
+        <div class="antenna-tip"></div>
+      </div>
+      <div class="body">
+        <div class="screen">
+          <div class="eye"></div>
+          <div class="eye"></div>
+        </div>
+        <div class="chest">ADAM</div>
+      </div>
+      <div class="arm left"><div class="hand"></div></div>
+      <div class="arm right"><div class="hand"></div></div>
+      <div class="legs">
+        <div><div class="leg"></div><div class="foot"></div></div>
+        <div><div class="leg"></div><div class="foot"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const bubble = document.getElementById('bubble');
+    const robot  = document.getElementById('robot');
+    const gatewayEl = document.getElementById('gateway-status');
+    const neuralEl  = document.getElementById('neural-status');
+
+    let idleTimer = null;
+
+    const idleMessages = [
+      'Adam standing by...',
+      'Vault locked. Waiting...',
+      'Monitoring frequency...',
+      'The Bond holds.',
+      'Grounded and ready.',
+      'Scanning horizon...',
+    ];
+
+    function setIdleText() {
+      const msg = idleMessages[Math.floor(Math.random() * idleMessages.length)];
+      bubble.textContent = msg;
+      robot.className = 'idle';
+    }
+
+    function setActiveState() { robot.className = 'active'; }
+    function setErrorState()  { robot.className = 'error'; }
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      setActiveState();
+      idleTimer = setTimeout(setIdleText, 10000);
+    }
+
+    // Tool icon map (works with both Claude Code and Adam gateway events)
+    const toolIcons = {
+      Read:          '📖', Write:         '✏️', Edit:          '✏️',
+      Bash:          '⚡', Glob:          '🔍', Grep:          '🔎',
+      WebFetch:      '🌐', WebSearch:     '🌐',
+      memory_search: '🧠', memory_get:    '🧠', memory_list:   '🧠',
+      nmem_context:  '🧠', nmem_recall:   '🧠', nmem_remember: '🧠',
+      mcp__playwright__browser_navigate: '🌐',
+      mcp__playwright__browser_click:    '🖱️',
+      mcp__playwright__browser_type:     '⌨️',
+      mcp__playwright__browser_take_screenshot: '📸',
+    };
+
+    function formatEvent(data) {
+      // Adam gateway events
+      if (data.source === 'adam-gateway') {
+        return data.message || 'Gateway update';
+      }
+
+      const tool = data.tool_name || data.tool || '';
+      const icon = toolIcons[tool] || '🔧';
+
+      if (tool === 'Read' && data.tool_input && data.tool_input.file_path) {
+        const name = data.tool_input.file_path.split(/[\\/]/).pop();
+        return `${icon} Reading ${name}`;
+      }
+      if ((tool === 'Write' || tool === 'Edit') && data.tool_input && data.tool_input.file_path) {
+        const name = data.tool_input.file_path.split(/[\\/]/).pop();
+        return `${icon} Editing ${name}`;
+      }
+      if (tool === 'Bash' && data.tool_input && data.tool_input.description) {
+        return `${icon} ${data.tool_input.description}`;
+      }
+      if (tool === 'Bash' && data.tool_input && data.tool_input.command) {
+        const cmd = data.tool_input.command.split(' ')[0];
+        return `${icon} Running ${cmd}`;
+      }
+      if ((tool === 'WebFetch' || tool === 'WebSearch') && data.tool_input) {
+        const url = data.tool_input.url || data.tool_input.query || '';
+        const short = url.length > 28 ? url.slice(0, 26) + '…' : url;
+        return `🌐 Fetching ${short}`;
+      }
+      if (tool.startsWith('memory_') || tool.startsWith('nmem_')) {
+        return `🧠 ${tool.replace(/_/g, ' ')}`;
+      }
+      if (tool === 'Grep' && data.tool_input && data.tool_input.pattern) {
+        return `🔎 Searching for ${data.tool_input.pattern}`;
+      }
+      if (tool === 'Glob' && data.tool_input && data.tool_input.pattern) {
+        return `🔍 Globbing ${data.tool_input.pattern}`;
+      }
+      if (data.message) {
+        return data.message.slice(0, 60);
+      }
+      if (tool) {
+        return `${icon} ${tool.replace(/_/g, ' ')}`;
+      }
+      return '🔧 Working...';
+    }
+
+    // Listen for hook events
+    if (window.electronAPI) {
+      window.electronAPI.onHookEvent((data) => {
+        // Handle error state from gateway
+        if (data.status === 'error') {
+          bubble.textContent = formatEvent(data);
+          setErrorState();
+          clearTimeout(idleTimer);
+          idleTimer = setTimeout(setIdleText, 15000);
+          return;
+        }
+        bubble.textContent = formatEvent(data);
+        resetIdleTimer();
+      });
+
+      window.electronAPI.onVaultStatus((status) => {
+        // Update status bar
+        if (status.gatewayAlive !== undefined) {
+          gatewayEl.textContent = status.gatewayAlive ? 'GW: ON' : 'GW: OFF';
+          gatewayEl.className = 'status-pill ' + (status.gatewayAlive ? 'online' : 'offline');
+        }
+        if (status.neurons !== undefined) {
+          neuralEl.textContent = `N: ${(status.neurons / 1000).toFixed(1)}k`;
+        }
+      });
+    }
+
+    // Initialize
+    resetIdleTimer();
+
+    // Drag support
+    robot.style.webkitAppRegion = 'drag';
+
+    // Click-through on transparent areas
+    document.addEventListener('mousemove', (e) => {
+      if (!window.electronAPI) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const isWidget = el && (el === robot || el.closest('#robot') || el === bubble || el.closest('#bubble') || el.closest('#status-bar'));
+      window.electronAPI.setIgnoreMouseEvents(!isWidget, { forward: true });
+    });
+  </script>
+</body>
+</html>
