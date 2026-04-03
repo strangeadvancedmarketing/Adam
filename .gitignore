@@ -36,10 +36,14 @@ kokoro_*.log
 # Build scripts (not part of the public repo)
 gen_og.py
 
-# Python cache
+# Python cache and build artifacts
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
 
 # Node
 node_modules/

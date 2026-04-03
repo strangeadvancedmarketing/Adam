@@ -1,14 +1,16 @@
 """
 coherence_monitor.py — Adam Coherence Monitor (Layer 5)
-Detects within-session coherence degradation via two signals:
-  1. Scratchpad dropout — scratchpad tag absent from recent assistant turns
-  2. Real token depth — actual input token count from OpenClaw session JSONL
+Detects within-session coherence degradation via token depth only.
+
+VERSION: 2.0.0 — Model-agnostic rewrite (2026-03-20)
+CHANGE: Removed scratchpad detection. Different models (Kimi, DeepSeek, Claude)
+        follow XML tag instructions differently. Scratchpad detection only worked
+        reliably with Kimi K2.5. Now uses pure token depth as the drift signal.
 
 HOW IT WORKS:
   Reads the active OpenClaw session JSONL file (one JSON object per line).
-  Extracts assistant turns, checks scratchpad usage in the last N turns,
-  reads real token counts from the usage field (no char estimation).
-  When drift is confirmed, writes reanchor_pending.json for SENTINEL to consume.
+  Reads real token counts from the usage field (no char estimation).
+  When context exceeds threshold, writes reanchor_pending.json for SENTINEL.
   Logs every check event to coherence_log.json (session-scoped, reset at boot).
 
 RUNS AS: Standalone script called by SENTINEL on a time interval.
@@ -40,9 +42,10 @@ SESSIONS_DIR     = r"C:\Users\AJSup\.openclaw\agents\main\sessions"
 CONTEXT_WINDOW   = 131072   # Kimi K2.5
 
 # ── THRESHOLDS ────────────────────────────────────────────────────────────────
-SCRATCHPAD_WINDOW       = 10    # assistant turns to look back
-CONTEXT_DRIFT_THRESHOLD = 0.40  # 40% — drift risk begins
-CONTEXT_WARN_THRESHOLD  = 0.65  # 65% — high risk, re-anchor regardless
+# v2.0: Scratchpad detection removed — model-agnostic token depth only
+CONTEXT_DRIFT_THRESHOLD = 0.50  # 50% — start monitoring closely
+CONTEXT_WARN_THRESHOLD  = 0.70  # 70% — trigger re-anchor
+CONTEXT_CRITICAL        = 0.85  # 85% — urgent, compaction imminent
 
 # ── LOGGING ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -122,17 +125,17 @@ def find_active_session():
         return None
 
 # ── PART 3: JSONL SESSION READER ──────────────────────────────────────────────
-SCRATCHPAD_RE = re.compile(r"<scratchpad>", re.IGNORECASE)
-
 def read_session(session_path):
     """
     Parse OpenClaw JSONL session file (one JSON object per line).
     Returns:
-      assistant_turns  — list of assistant message objects (with usage field)
+      turn_count      — total number of assistant turns
       last_input_tokens — input token count from the most recent assistant turn
+      model_id        — model string from the most recent assistant turn
     """
-    assistant_turns = []
+    turn_count = 0
     last_input_tokens = 0
+    model_id = "unknown"
 
     try:
         with open(session_path, "r", encoding="utf-8", errors="replace") as f:
@@ -151,68 +154,42 @@ def read_session(session_path):
                 if msg.get("role") != "assistant":
                     continue
 
-                assistant_turns.append(msg)
+                turn_count += 1
                 usage = msg.get("usage", {})
                 if usage.get("input", 0) > 0:
                     last_input_tokens = usage["input"]
+                if msg.get("model"):
+                    model_id = msg["model"]
 
     except Exception as e:
         rlog(f"Session read error: {e}", "ERROR")
-        return [], 0
+        return 0, 0, "unknown"
 
-    return assistant_turns, last_input_tokens
+    return turn_count, last_input_tokens, model_id
 
-def check_scratchpad(assistant_turns, window=SCRATCHPAD_WINDOW):
+
+# ── PART 4: DRIFT SCORING (TOKEN DEPTH ONLY) ──────────────────────────────────
+def score_drift(context_pct):
     """
-    Check whether scratchpad tag fired in the last N assistant turns.
-    Searches content array for thinking blocks and text blocks.
-    Returns True if found (coherent), False if absent (potential drift).
+    v2.0: Model-agnostic scoring based purely on token depth.
+    
+    0.0 = healthy (< 50% context)
+    0.3 = moderate pressure (50-70% context)  
+    0.7 = high pressure, re-anchor (70-85% context)
+    0.9 = critical, compaction imminent (> 85% context)
     """
-    recent = assistant_turns[-window:] if len(assistant_turns) >= window else assistant_turns
-    for turn in recent:
-        content = turn.get("content", [])
-        if isinstance(content, list):
-            for block in content:
-                block_str = json.dumps(block)
-                if SCRATCHPAD_RE.search(block_str):
-                    return True
-        elif isinstance(content, str):
-            if SCRATCHPAD_RE.search(content):
-                return True
-    return False
-
-
-# ── PART 4: DRIFT SCORING ─────────────────────────────────────────────────────
-def score_drift(scratchpad_present, context_pct):
-    """
-    0.0 = fully coherent (scratchpad present, low context)
-    0.2 = healthy pressure (scratchpad present, mid context)
-    0.4 = pressure building (scratchpad present, high context)
-    0.3 = early warning (scratchpad absent, low context)
-    0.6 = drift likely (scratchpad absent, mid context)
-    0.9 = drift confirmed (scratchpad absent, high context)
-
-    NOTE: All scratchpad_present branches must be exhaustive — no fall-through.
-    """
-    if scratchpad_present:
-        if context_pct < CONTEXT_DRIFT_THRESHOLD:
-            return 0.0   # coherent, low pressure
-        elif context_pct < CONTEXT_WARN_THRESHOLD:
-            return 0.2   # coherent, moderate pressure — monitor only
-        else:
-            return 0.4   # coherent but deep context — soft warning
+    if context_pct < CONTEXT_DRIFT_THRESHOLD:
+        return 0.0   # healthy
+    elif context_pct < CONTEXT_WARN_THRESHOLD:
+        return 0.3   # moderate pressure — monitor only
+    elif context_pct < CONTEXT_CRITICAL:
+        return 0.7   # high pressure — re-anchor
     else:
-        if context_pct < CONTEXT_DRIFT_THRESHOLD:
-            return 0.3   # scratchpad absent, low context — early warning
-        elif context_pct < CONTEXT_WARN_THRESHOLD:
-            return 0.6   # scratchpad absent, mid context — re-anchor
-        else:
-            return 0.9   # scratchpad absent, deep context — urgent re-anchor
+        return 0.9   # critical — urgent re-anchor
 
-def should_reanchor(drift_score, context_pct):
-    # Only re-anchor on scratchpad dropout signals (score >= 0.6)
-    # Context depth alone (scratchpad present) never triggers re-anchor
-    return drift_score >= 0.6
+def should_reanchor(drift_score):
+    """Re-anchor when score >= 0.7 (context at 70%+)"""
+    return drift_score >= 0.7
 
 # ── PART 5: COHERENCE LOG (SESSION-SCOPED) ────────────────────────────────────
 def load_coherence_log():
@@ -231,15 +208,15 @@ def load_coherence_log():
 def _fresh_log():
     return {"session_date": str(date.today()), "events": []}
 
-def append_coherence_event(turn, context_pct, scratchpad_present, drift_score, action):
+def append_coherence_event(turn, context_pct, drift_score, action, model_id="unknown"):
     clog = load_coherence_log()
     clog["events"].append({
         "timestamp":        datetime.now().isoformat(),
         "turn":             turn,
         "context_pct":      round(context_pct, 4),
-        "scratchpad_fired": scratchpad_present,
         "drift_score":      round(drift_score, 2),
-        "action":           action
+        "action":           action,
+        "model":            model_id
     })
     try:
         with open(COHERENCE_LOG, "w", encoding="utf-8") as f:
@@ -251,38 +228,10 @@ def append_coherence_event(turn, context_pct, scratchpad_present, drift_score, a
 # ── PART 6: RE-ANCHOR CONTENT BUILDER ────────────────────────────────────────
 def build_reanchor_content():
     """
-    Pull identity-critical content from live Vault files.
-    Target: ~200 tokens. Surgical re-anchor, not a full context reload.
-    Falls back to a minimal hardcoded string if files are unreadable.
-
-    IMPORTANT: The re-anchor content must NOT contain the literal string
-    '<scratchpad>' — that string is the detection target in check_scratchpad().
-    If the injected content contains it, the next coherence check finds a ghost
-    hit and scores the session as coherent even when it isn't, OR scores it as
-    drifting when the only hit is from the re-anchor block itself.
-    All scratchpad tags are stripped from extracted content before injection.
+    v2.0: Simplified re-anchor — just remind to check active-context.
+    No scratchpad instruction injection needed since we're not detecting it.
     """
-    # Sentinel string that must never appear in re-anchor output
-    SCRATCHPAD_TAG = "<scratchpad>"
-    SCRATCHPAD_PLACEHOLDER = "[SCRATCHPAD_LOOP_INSTRUCTION]"
-
     sections = []
-
-    # Extract ReAct loop header from AGENTS.md
-    try:
-        with open(AGENTS_MD, "r", encoding="utf-8", errors="replace") as f:
-            agents_text = f.read()
-        match = re.search(
-            r"(CRITICAL COGNITIVE FRAMEWORK.*?<scratchpad>)",
-            agents_text, re.DOTALL
-        )
-        if match:
-            # Strip the literal scratchpad tag — replace with neutral placeholder
-            extracted = match.group(1)[:500].strip()
-            extracted = extracted.replace(SCRATCHPAD_TAG, SCRATCHPAD_PLACEHOLDER)
-            sections.append(extracted)
-    except Exception as e:
-        rlog(f"AGENTS.md read failed for re-anchor: {e}", "WARNING")
 
     # Extract Priority 1 block from active-context.md
     try:
@@ -293,21 +242,21 @@ def build_reanchor_content():
             ctx_text, re.DOTALL | re.MULTILINE
         )
         if match:
-            sections.append(match.group(1).strip()[:350])
+            sections.append(match.group(1).strip()[:500])
     except Exception as e:
         rlog(f"active-context.md read failed for re-anchor: {e}", "WARNING")
 
     if not sections:
         return (
-            "COHERENCE RE-ANCHOR: Scratchpad dropout detected. "
-            "Re-engage your ReAct cognitive loop before responding. "
-            "Check active-context.md for current priorities."
+            "⚠️ CONTEXT PRESSURE: Session approaching token limit. "
+            "Review active-context.md for current priorities. "
+            "Consider wrapping up current task or requesting compaction."
         )
 
     return (
-        "⚠️ COHERENCE RE-ANCHOR — Scratchpad dropout detected.\n"
-        "Re-engage your ReAct cognitive loop now.\n\n"
-        + "\n\n---\n\n".join(sections)
+        "⚠️ CONTEXT PRESSURE — Session at high token depth.\n"
+        "Current priorities:\n\n"
+        + "\n\n".join(sections)
     )
 
 def write_reanchor_trigger(content, turn, drift_score):
@@ -356,7 +305,7 @@ def write_reanchor_trigger(content, turn, drift_score):
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
     rlog("=" * 60)
-    rlog("Adam Coherence Monitor starting")
+    rlog("Adam Coherence Monitor v2.0 (model-agnostic)")
     rlog("=" * 60)
 
     baseline = load_baseline()
@@ -366,12 +315,12 @@ def main():
         rlog("No active session — exiting clean.")
         sys.exit(0)
 
-    assistant_turns, last_input_tokens = read_session(session_path)
-    total_turns = len(assistant_turns)
-    rlog(f"Assistant turns found: {total_turns}")
-    rlog(f"Last input token count: {last_input_tokens}")
+    turn_count, last_input_tokens, model_id = read_session(session_path)
+    rlog(f"Model: {model_id}")
+    rlog(f"Assistant turns: {turn_count}")
+    rlog(f"Last input tokens: {last_input_tokens}")
 
-    if total_turns == 0:
+    if turn_count == 0:
         rlog("No assistant turns yet — session too new to evaluate.")
         sys.exit(0)
 
@@ -379,25 +328,20 @@ def main():
     context_pct = min(last_input_tokens / CONTEXT_WINDOW, 1.0)
     rlog(f"Context depth: {last_input_tokens}/{CONTEXT_WINDOW} = {context_pct*100:.1f}%")
 
-    scratchpad_present = check_scratchpad(assistant_turns)
-    rlog(f"Scratchpad in last {SCRATCHPAD_WINDOW} turns: {scratchpad_present}")
-
-    drift_score = score_drift(scratchpad_present, context_pct)
+    drift_score = score_drift(context_pct)
     rlog(f"Drift score: {drift_score}")
 
-    if not should_reanchor(drift_score, context_pct):
-        rlog("Session coherent — no action needed.")
-        append_coherence_event(
-            total_turns, context_pct, scratchpad_present, drift_score, "coherent"
-        )
-        baseline["last_check_turn"] = total_turns
+    if not should_reanchor(drift_score):
+        rlog("Session healthy — no action needed.")
+        append_coherence_event(turn_count, context_pct, drift_score, "healthy", model_id)
+        baseline["last_check_turn"] = turn_count
         _save_baseline(baseline)
         sys.exit(0)
 
-    # Drift confirmed
-    rlog("DRIFT DETECTED — writing re-anchor trigger.", "WARNING")
+    # Context pressure detected
+    rlog("CONTEXT PRESSURE — writing re-anchor trigger.", "WARNING")
     reanchor_content = build_reanchor_content()
-    written = write_reanchor_trigger(reanchor_content, total_turns, drift_score)
+    written = write_reanchor_trigger(reanchor_content, turn_count, drift_score)
 
     if written:
         action = "reanchor_triggered"
@@ -405,15 +349,13 @@ def main():
         action = "reanchor_skipped_pending"
         rlog("Re-anchor already pending — SENTINEL has not consumed previous trigger yet.")
 
-    append_coherence_event(
-        total_turns, context_pct, scratchpad_present, drift_score, action
-    )
+    append_coherence_event(turn_count, context_pct, drift_score, action, model_id)
 
-    baseline["last_check_turn"] = total_turns
+    baseline["last_check_turn"] = turn_count
     if written:
         baseline["reinjections"] = baseline.get("reinjections", 0) + 1
         baseline["drift_events"] = baseline.get("drift_events", []) + [{
-            "turn":        total_turns,
+            "turn":        turn_count,
             "context_pct": round(context_pct, 4),
             "drift_score": drift_score,
             "timestamp":   datetime.now().isoformat()

@@ -232,6 +232,12 @@ adam-framework/
 │   ├── coherence_baseline.template.json  <- Layer 5 baseline tracking schema
 │   ├── coherence_log.template.json       <- Layer 5 event log schema
 │   └── active-context.template.md <- Active task tracking
+├── adam/                          <- Python package (pip install adam-framework)
+│   ├── __init__.py                <- Package version
+│   ├── cli.py                     <- CLI tool: adam init, start, stop, status, reconcile
+│   ├── providers.py               <- LLM provider abstraction (Gemini/OpenAI/Anthropic/Ollama)
+│   ├── swarm.py                   <- SWARM task orchestration runtime
+│   └── events.py                  <- Event bus + webhook receiver
 ├── tools/
 │   ├── legacy_importer.py         <- Step 1: Extract facts from Claude/ChatGPT export
 │   ├── ingest_triples.ps1         <- Step 2: Feed extracted facts into neural graph
@@ -239,6 +245,8 @@ adam-framework/
 │   ├── reconcile_memory.py        <- Nightly sleep cycle (runs via SENTINEL)
 │   ├── coherence_monitor.py       <- Layer 5: scratchpad dropout detector + re-anchor
 │   └── test_coherence_monitor.py  <- 33-test suite, validated against live session data
+├── tests/                         <- 27 unit tests for providers, SWARM, and events
+├── pyproject.toml                 <- Python packaging (pip install adam-framework)
 ├── docs/
 │   ├── ARCHITECTURE.md            <- Deep dive on all 5 layers
 │   ├── CONFIG_REFERENCE.md        <- Every config field explained
@@ -252,6 +260,106 @@ adam-framework/
 │   └── LINEAGE_EXTENDED.md        <- The full 8-month arc: all three AIs, cross-referenced
 └── showcase/
     └── ai-amnesia-solved.html     <- Interactive data visualization
+```
+
+---
+
+## Quick Start (pip install)
+
+```bash
+pip install adam-framework
+
+# Initialize a new vault
+adam init --path ~/MyVault
+
+# Check framework health
+adam status
+
+# Start SENTINEL daemon
+adam start
+
+# Run memory reconciliation manually
+adam reconcile
+```
+
+Set your LLM provider via environment variable:
+```bash
+export GEMINI_API_KEY=your-key      # Google Gemini
+export OPENAI_API_KEY=your-key      # OpenAI / OpenRouter / any compatible
+export ANTHROPIC_API_KEY=your-key   # Anthropic Claude
+# Or use Ollama locally — no key needed, auto-detected
+```
+
+---
+
+## The Agent Harness
+
+The Adam Framework is a complete **agent harness** — the orchestration layer between any LLM and the real world. The model is not the innovation. The harness is.
+
+### Multi-Provider LLM Support
+
+Switch models without losing anything. The provider abstraction layer works with Gemini, OpenAI, Anthropic, Ollama, and any OpenAI-compatible endpoint. Your vault, your memory, your identity — all survive the swap.
+
+```python
+from adam.providers import get_provider
+
+# Auto-detects from environment
+provider = get_provider()
+response = provider.complete(
+    system_prompt="You are a memory reconciliation system.",
+    user_prompt="Merge these daily logs...",
+    temperature=0.1,
+)
+```
+
+### SWARM — Multi-Agent Task Orchestration
+
+Agents don't talk to each other. They talk to the Vault. Tasks are files. Locks prevent double-processing. The filesystem is the queue.
+
+```python
+from adam.swarm import Swarm
+
+swarm = Swarm(vault_path="/path/to/vault")
+
+# Create a task
+swarm.create_task("research", {"target": "Doctor Paver Corp"}, priority=5)
+
+# In an agent process — claim and complete
+task = swarm.claim_next("research", agent_id="pattern_seeker")
+if task:
+    result = do_research(task.payload)
+    swarm.complete_task(task.task_id, result)
+```
+
+```bash
+# CLI management
+adam swarm stats       # Pending, claimed, completed counts
+adam swarm tasks       # List all tasks
+adam swarm create research --payload '{"target": "new lead"}'
+```
+
+Full architecture: [docs/SWARM.md](docs/SWARM.md)
+
+### Event-Driven Triggers
+
+Move beyond polling. External systems push events via webhooks. SENTINEL processes them on its loop. File-based event bus with HTTP receiver.
+
+```python
+from adam.events import EventBus, Event
+
+bus = EventBus(vault_path="/path/to/vault")
+bus.emit(Event(event_type="github.push", source="webhook", payload={"repo": "Adam"}))
+
+# Poll and process
+for event in bus.poll(event_type="github.push"):
+    handle_deployment(event)
+    bus.ack(event.event_id)
+```
+
+```bash
+# Start the webhook receiver
+adam webhook start --port 9876
+# POST to http://127.0.0.1:9876/webhook with JSON body
 ```
 
 ---

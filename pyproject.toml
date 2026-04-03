@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adam-framework"
+version = "0.2.0"
+description = "Autonomous AI Agent Harness — persistent memory, multi-agent orchestration, and event-driven triggers for any LLM"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Jereme Strange", email = "ajsupplycollc@gmail.com"},
+]
+keywords = ["ai", "agent", "harness", "memory", "llm", "orchestration", "swarm", "mcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+    "requests>=2.28.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.0.0"]
+all = ["mcp>=1.0.0"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+adam = "adam.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/strangeadvancedmarketing/Adam"
+Documentation = "https://github.com/strangeadvancedmarketing/Adam/tree/main/docs"
+Repository = "https://github.com/strangeadvancedmarketing/Adam"
+Issues = "https://github.com/strangeadvancedmarketing/Adam/issues"
+
+[tool.setuptools.packages.find]
+include = ["adam*"]
+
+[tool.setuptools.package-data]
+adam = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
