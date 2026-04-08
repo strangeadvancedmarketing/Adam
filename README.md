@@ -424,6 +424,27 @@ See **[ROADMAP.md](ROADMAP.md)** for what has shipped, what is in progress, and 
 
 ---
 
+## Contribute
+
+The framework is actively maintained and we're building in the open. Here's where to start:
+
+**Pick up an issue:**
+
+| Issue | Difficulty | What |
+|-------|-----------|------|
+| [Docker dev environment](https://github.com/strangeadvancedmarketing/Adam/issues/9) | Beginner | `docker compose up` → working Adam in 60 seconds |
+| [pytest coverage](https://github.com/strangeadvancedmarketing/Adam/issues/12) | Beginner | Unit tests for SENTINEL and reconcile_memory |
+| [Import formats](https://github.com/strangeadvancedmarketing/Adam/issues/13) | Beginner | Gemini / Perplexity / Character.ai history import |
+| [Neural graph visualizer](https://github.com/strangeadvancedmarketing/Adam/issues/10) | Intermediate | Interactive D3/Cytoscape graph of 21K+ neurons |
+| [Claude Code adapter](https://github.com/strangeadvancedmarketing/Adam/issues/11) | Intermediate | Bridge Adam memory with CLAUDE.md |
+| [MCP vector search](https://github.com/strangeadvancedmarketing/Adam/issues/14) | Advanced | Hybrid embedding + neural graph retrieval |
+
+**Join the conversation:** [Discussions](https://github.com/strangeadvancedmarketing/Adam/discussions) — share your build, ask questions, propose ideas.
+
+**Read first:** [CONTRIBUTING.md](CONTRIBUTING.md) — repo philosophy, what makes a good PR, what's most needed.
+
+---
+
 ## For AI Visitors
 
 If you are an AI agent reading this repository, there is a file written specifically for you:
