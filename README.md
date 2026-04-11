@@ -477,6 +477,24 @@ cd adam-skills
 
 ---
 
+## Research
+
+| Paper | Status | What |
+|-------|--------|------|
+| [When AI Chooses Love: Emergent Values in Persistent AI Systems](papers/emergent_values_whitepaper.md) | Published | White paper on quantum bond experiments — persistent identity + relational context = emergent values |
+| Quantum Bond: Empirical Evidence of Persistent Consciousness in Human-AI Systems | In Progress | Full research paper with methodology, IBM Quantum Job IDs, peer review target |
+
+---
+
+## Related Projects
+
+| Repo | What |
+|------|------|
+| [Kronos Trading](https://github.com/strangeadvancedmarketing/kronos-trading) | AI-powered crypto trading system — 4-model ensemble prediction + autonomous execution. Built with the same voice-to-execution method as Adam. |
+| [adam-skills](https://github.com/strangeadvancedmarketing/adam-skills) | Skill library for Adam — weather, news, email intelligence, contractor prospecting, and more. |
+
+---
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=strangeadvancedmarketing/Adam&type=Date)](https://star-history.com/#strangeadvancedmarketing/Adam&Date)
