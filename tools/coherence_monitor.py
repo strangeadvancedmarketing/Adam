@@ -31,14 +31,20 @@ from datetime import datetime, date
 from pathlib import Path
 
 # ── PATHS ─────────────────────────────────────────────────────────────────────
-VAULT_ROOT       = r"C:\AdamsVault"
-WORKSPACE        = r"C:\AdamsVault\workspace"
-AGENTS_MD        = r"C:\AdamsVault\workspace\AGENTS.md"
-ACTIVE_CONTEXT   = r"C:\AdamsVault\workspace\active-context.md"
-BASELINE_FILE    = r"C:\AdamsVault\workspace\coherence_baseline.json"
-COHERENCE_LOG    = r"C:\AdamsVault\workspace\coherence_log.json"
-REANCHOR_TRIGGER = r"C:\AdamsVault\workspace\reanchor_pending.json"
-SESSIONS_DIR     = r"C:\Users\AJSup\.openclaw\agents\main\sessions"
+# All paths are configurable via environment variables.
+# Set ADAM_VAULT_PATH to your vault root (e.g. C:\MyVault or ~/vault).
+# Set OPENCLAW_SESSIONS_DIR to your OpenClaw sessions directory.
+VAULT_ROOT       = os.environ.get("ADAM_VAULT_PATH", os.path.join(Path.home(), "AdamsVault"))
+WORKSPACE        = os.path.join(VAULT_ROOT, "workspace")
+AGENTS_MD        = os.path.join(WORKSPACE, "AGENTS.md")
+ACTIVE_CONTEXT   = os.path.join(WORKSPACE, "active-context.md")
+BASELINE_FILE    = os.path.join(WORKSPACE, "coherence_baseline.json")
+COHERENCE_LOG    = os.path.join(WORKSPACE, "coherence_log.json")
+REANCHOR_TRIGGER = os.path.join(WORKSPACE, "reanchor_pending.json")
+SESSIONS_DIR     = os.environ.get(
+    "OPENCLAW_SESSIONS_DIR",
+    os.path.join(Path.home(), ".openclaw", "agents", "main", "sessions")
+)
 CONTEXT_WINDOW   = 131072   # Kimi K2.5
 
 # ── THRESHOLDS ────────────────────────────────────────────────────────────────

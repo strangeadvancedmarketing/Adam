@@ -1,7 +1,13 @@
 import sqlite3, re, subprocess, sys, os
 
-DB_PATH   = r"C:\Users\ajsup\.neuralmemory\brains\default.db"
-REPO_PATH = r"C:\Users\ajsup\adam-framework-public"
+DB_PATH   = os.environ.get(
+    "NMEM_DB_PATH",
+    os.path.join(os.path.expanduser("~"), ".neuralmemory", "brains", "default.db")
+)
+REPO_PATH = os.environ.get(
+    "ADAM_REPO_PATH",
+    os.path.join(os.path.expanduser("~"), "adam-framework-public")
+)
 README    = os.path.join(REPO_PATH, "README.md")
 INDEX     = os.path.join(REPO_PATH, "index.html")
 

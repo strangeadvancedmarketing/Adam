@@ -406,7 +406,7 @@ Check `$env:USERPROFILE\.openclaw\sentinel.log`. Usually a bad JSON in openclaw.
 BOOT_CONTEXT.md wasn't compiled. Check that `C:\MyAIVault\CORE_MEMORY.md` exists and `$VAULT_PATH` in SENTINEL.ps1 is correct. Restart SENTINEL.
 
 **"nmem_stats() hangs or errors"**
-mcporter can't find the neural-memory server. Confirm: `mcporter config path` shows a valid file, the file has the neural-memory block, and `python -m neural_memory.mcp_server` runs without error.
+mcporter can't find the neural-memory server. Confirm: `mcporter config path` shows a valid file, the file has the neural-memory block, and `python -m neural_memory.mcp` runs without error.
 
 **"Execution of scripts is disabled"**
 Run in PowerShell as Administrator:
@@ -420,8 +420,6 @@ Normal if your conversations were mostly short exchanges. Try `--max-per-conv 50
 **"Ingest is stuck / failed at fact #X"**
 Run with `-StartAt X` to resume from where it stopped. Check that mcporter is running and `nmem_stats()` returns a response.
 
-**"Sleep cycle not running"**
-Check sentinel.log for "Sleep cycle skipped" messages. Most common cause: GEMINI_API_KEY not in openclaw.json env block, or the `_reconcile_state.json` thinks it ran recently. Delete the state file to force a run: `del "C:\MyAIVault\workspace\memory\_reconcile_state.json"`.
 **"Sleep cycle not running"**
 Check sentinel.log for "Sleep cycle skipped" messages. Most common cause: GEMINI_API_KEY not in openclaw.json env block, or the `_reconcile_state.json` thinks it ran recently. Delete the state file to force a run: `del "C:\MyAIVault\workspace\memory\_reconcile_state.json"`.
 

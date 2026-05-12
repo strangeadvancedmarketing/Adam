@@ -900,7 +900,7 @@ in a fresh session, with hybrid search (semantic + keyword), provider openai/nvi
 and session transcripts indexed and searchable.
 
 ### Recovery Steps
-1. Edit `C:\Users\ajsup\AppData\Roaming\npm\node_modules\openclaw\extensions\memory-core\index.ts`
+1. Edit `%APPDATA%\npm\node_modules\openclaw\extensions\memory-core\index.ts`
 2. Replace both `config: ctx.config` with `config: api.config`
 3. Kill the gateway (SENTINEL restarts automatically)
 4. Start a fresh session (`/new` in Telegram)
@@ -913,12 +913,12 @@ overwrite `memory-core/index.ts` and break `memory_search` again.
 **After every openclaw update, re-apply the patch:**
 ```powershell
 # Check if patch is still in place
-Select-String -Path "C:\Users\ajsup\AppData\Roaming\npm\node_modules\openclaw\extensions\memory-core\index.ts" -Pattern "api\.config"
+Select-String -Path "$env:APPDATA\npm\node_modules\openclaw\extensions\memory-core\index.ts" -Pattern "api\.config"
 # If no output → patch was overwritten → re-apply it
 ```
 
 A backup of the patched file is kept at:
-`C:\Users\ajsup\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts`
+`$env:USERPROFILE\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts`
 
 ### Key Insight
 > **`ctx.config` and `api.config` are not the same object in the OpenClaw plugin API.**

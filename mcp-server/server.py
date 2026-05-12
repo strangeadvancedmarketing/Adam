@@ -41,7 +41,7 @@ def get_memory_files() -> list[Path]:
     search_dirs = [
         VAULT_PATH,
         VAULT_PATH / "memory",
-        VAULT_PATH / "scripture",
+        VAULT_PATH / "notes",
     ]
     for d in search_dirs:
         if d.exists():

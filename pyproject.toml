@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "adam-framework"
-version = "0.2.0"
+version = "1.1.0"
 description = "Autonomous AI Agent Harness — persistent memory, multi-agent orchestration, and event-driven triggers for any LLM"
 readme = "README.md"
 license = {text = "MIT"}

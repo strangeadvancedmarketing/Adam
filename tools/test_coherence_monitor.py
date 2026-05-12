@@ -23,7 +23,10 @@ SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT    = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
 
-LIVE_SESSIONS = r"C:\Users\AJSup\.openclaw\agents\main\sessions"
+LIVE_SESSIONS = os.environ.get(
+    "OPENCLAW_SESSIONS_DIR",
+    os.path.join(os.path.expanduser("~"), ".openclaw", "agents", "main", "sessions")
+)
 TEST_SESSION  = os.path.join(
     LIVE_SESSIONS,
     "b528023e-6cac-41bc-a3c2-ac1f6638d7db.jsonl"

@@ -164,7 +164,7 @@ Edit the file — at minimum, you need the `neural-memory` block. Remove any ser
   "servers": {
     "neural-memory": {
       "command": "python",
-      "args": ["-m", "neural_memory.mcp_server"],
+      "args": ["-m", "neural_memory.mcp"],
       "env": {}
     }
   }

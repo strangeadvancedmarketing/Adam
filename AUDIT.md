@@ -137,6 +137,9 @@ These components correctly make no model assumptions:
 
 ### Immediate (Before Next Release)
 
+> **v2.0 deployed** — scratchpad detection removed, token-depth monitoring is now the sole signal.
+> coherence_monitor.py v2.0.0 is model-agnostic; no behavioral tag compliance required.
+
 1. **✅ DONE:** Remove scratchpad detection from coherence_monitor.py
 2. **TODO:** Make CONTEXT_WINDOW configurable per model
 3. **TODO:** Add model compatibility section to README

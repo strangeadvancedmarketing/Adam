@@ -92,7 +92,7 @@ PROSPECT -> ENRICH -> BUILD SITE -> OUTREACH
 search across Facebook, Yelp, and Google. Current focus: artificial turf vertical.
 
 **Identified prospects (no website, active):**
-Doctor Paver Corp, J&L Artificial Grass, Clean Turf Club, MTP Turf
+Acme Landscaping, Metro Turf Services, Sunshine Pavers Inc, GreenEdge Lawn Co
 
 **Outreach model:** Build the demo site first, then send the email.
 $299 one-time or $49/month managed. 3-5 prospects per session max.

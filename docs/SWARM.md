@@ -62,9 +62,9 @@ No message broker. No central scheduler. The filesystem is the queue.
 
 ```
 workspace/tasks/
-├── lead_research_doctor_paver_corp.md    ← unclaimed task
-├── lead_research_doctor_paver_corp.lock  ← claimed by PATTERN_SEEKER
-└── site_build_jl_artificial_grass.md    ← unclaimed task
+├── lead_research_acme_landscaping.md     ← unclaimed task
+├── lead_research_acme_landscaping.lock   ← claimed by PATTERN_SEEKER
+└── site_build_metro_turf_services.md    ← unclaimed task
 ```
 
 The lock file prevents two agents from processing the same task simultaneously.
@@ -126,10 +126,10 @@ Filters for contractors who: mention needing a website, ask for marketing advice
 without a website link, or describe themselves as a new or growing operation.
 
 Identified high-value prospects (no website, active on Reddit):
-- Doctor Paver Corp
-- J&L Artificial Grass
-- Clean Turf Club
-- MTP Turf
+- Acme Landscaping
+- Metro Turf Services
+- Sunshine Pavers Inc
+- GreenEdge Lawn Co
 
 These were found by PATTERN_SEEKER and written to the task queue. Adam reviewed and
 classified them. The contractor-prospector tool then generates demo sites for outreach.

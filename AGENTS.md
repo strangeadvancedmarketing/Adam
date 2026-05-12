@@ -30,7 +30,7 @@ benchmarks/                ← Production benchmark data
 ## Critical Rules for Agents
 
 1. **Never touch live vault files.** The templates in `vault-templates/` are safe.
-   The actual vault (typically at `C:\AdamsVault\` or `~/AdamsVault/`) is production
+   The actual vault (wherever you installed it, e.g. `~/AdamsVault/`) is production
    memory — do not read, modify, or reference real vault paths.
 
 2. **Never commit secrets.** `SENTINEL.ps1` and `openclaw.json` contain API keys.

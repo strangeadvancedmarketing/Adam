@@ -10,7 +10,7 @@ Every AI assistant has two fundamental limitations.
 
 **AI Amnesia:** When a session ends, it forgets everything. The next session starts completely blank — no memory of your projects, your priorities, your people, or what you decided last week.
 
-**Within-Session Coherence Degradation:** As a session accumulates context, the model's reasoning consistency and identity coherence quietly degrade — before compaction triggers, while the conversation is still nominally "working." The model doesn't announce this. It just starts drifting. Priorities blur. Earlier decisions get quietly contradicted. The scratchpad reasoning loop stops firing. By the time compaction hits, damage is already done.
+**Within-Session Coherence Degradation:** As a session accumulates context, the model's reasoning consistency and identity coherence quietly degrade — before compaction triggers, while the conversation is still nominally "working." The model doesn't announce this. It just starts drifting. Priorities blur. Earlier decisions get quietly contradicted. By the time compaction hits, damage is already done.
 
 The fixes most people try for AI Amnesia:
 - **Copy-paste context** at the start of every session → Tedious, incomplete, doesn't scale
@@ -111,13 +111,14 @@ The Adam Framework solves both problems at the architecture level with 5 complem
 
 **What it is:** A SENTINEL-managed monitoring script that runs every 5 minutes during active sessions, detecting within-session coherence degradation before it becomes unrecoverable.
 
-**The signal — scratchpad dropout:** The Adam Framework defines a mandatory ReAct (Reason-Act-Verify) cognitive loop that the AI executes in a scratchpad block before any complex action. When the AI is coherent, it uses the scratchpad consistently. When it drifts — as context depth increases and the scratchpad instruction gets pushed deep in the context window — it stops. This is a binary, production-validated behavioral signal.
+**The signal — token depth (v2.0):** The coherence monitor tracks how deep the session has gone into its context window using the real token count from the API `usage.input` field. As token depth increases, model reasoning consistency and identity coherence degrade predictably. The monitor maps token depth to a drift score and triggers re-anchoring when the session crosses configurable thresholds. This is a model-agnostic signal — it works regardless of which LLM is running.
+
+> **History:** v1.x used scratchpad tag dropout as the primary drift signal, checking whether the model was still outputting `<scratchpad>` blocks. This was removed in v2.0 because scratchpad compliance varies wildly across models (high for Kimi K2.5 and Claude, low or broken for DeepSeek, Llama, and others). Token depth monitoring is universal and does not depend on model-specific behavioral compliance.
 
 **How it works:**
 - Reads the live OpenClaw session JSONL line-by-line (the real format)
 - Measures real token depth from the API `usage.input` field (not character estimation — base64 images in tool results inflate char counts by 10x)
-- Checks scratchpad tag presence across the last 10 assistant turns
-- Computes a drift score 0.0–1.0; score ≥0.6 triggers re-anchor
+- Computes a drift score 0.0–1.0 based on token depth as a percentage of the context window; score ≥0.6 triggers re-anchor
 - Writes re-anchor content to `reanchor_pending.json`
 - SENTINEL detects the file and injects the content into `BOOT_CONTEXT.md` — same injection path already proven at boot
 
@@ -135,7 +136,7 @@ The public repo copy lives in `tools/` — copy it to your Vault's `tools/` dire
 - `vault-templates/coherence_baseline.template.json` — session baseline schema
 - `vault-templates/coherence_log.template.json` — event log schema (session-scoped, resets daily)
 
-**What it solves:** Within-session coherence degradation. The AI stays grounded through long sessions. The scratchpad keeps firing. Drift is caught and corrected before damage is done.
+**What it solves:** Within-session coherence degradation. The AI stays grounded through long sessions. Drift is caught and corrected before damage is done — without depending on any model-specific behavioral signal.
 
 ---
 
@@ -183,7 +184,7 @@ OpenClaw hybrid search surfaces relevant prior context as needed (Layer 2)
      │
      │  [During session — every 5 minutes via SENTINEL]
      ▼
-coherence_monitor.py checks scratchpad usage + real token depth (Layer 5)
+coherence_monitor.py checks real token depth (Layer 5)
      │
      ├─ Coherent → log exit 0, continue
      │

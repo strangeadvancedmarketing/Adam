@@ -212,7 +212,7 @@ Minimum required block:
 ```json
 "neural-memory": {
   "command": "python",
-  "args": ["-m", "neural_memory.mcp_server"],
+  "args": ["-m", "neural_memory.mcp"],
   "env": {}
 }
 ```
@@ -223,7 +223,7 @@ mcporter call "neural-memory.nmem_stats()"
 ```
 Expected output: JSON object containing `neurons` and `synapses` keys. Values of 0 are correct on first run.
 
-If this hangs: verify `python -m neural_memory.mcp_server` runs without errors in a separate terminal.
+If this hangs: verify `python -m neural_memory.mcp` runs without errors in a separate terminal.
 
 **Phase 2 complete.** The neural graph is live. It starts empty and grows with every session.
 
@@ -407,7 +407,7 @@ Read the file, find the malformed line, fix it. Validate again. Do not proceed u
 Check: `$VAULT_PATH\CORE_MEMORY.md` exists. The path in SENTINEL.ps1 `$VAULT_PATH` matches exactly. Re-run SENTINEL manually to confirm.
 
 **nmem_stats() hangs indefinitely:**
-Kill it (Ctrl+C). Run `python -m neural_memory.mcp_server` directly — if it errors, there's a Python/dependency issue. If it runs, the mcporter routing is wrong — re-check the mcporter config path and neural-memory block.
+Kill it (Ctrl+C). Run `python -m neural_memory.mcp` directly — if it errors, there's a Python/dependency issue. If it runs, the mcporter routing is wrong — re-check the mcporter config path and neural-memory block.
 
 **Ingest aborts at 20 failures:**
 The mcporter → neural-memory connection broke mid-run. Diagnose the connection, then resume with `-StartAt N` where N is the last successful fact number from the log at `$VAULT_PATH\imports\ingest_log.txt`.

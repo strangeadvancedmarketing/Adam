@@ -180,7 +180,7 @@ automated script that touched the directory, the apostrophe required constant es
 It caused subtle failures in precisely the places where failures are hardest to see:
 file path operations, SENTINEL scripts, automated ingest pipelines.
 
-The fix required touching 52 files. The directory became `C:\AdamsVault`. No apostrophe.
+The fix required touching 52 files. The directory became `AdamsVault`. No apostrophe.
 No escaping. Everything that had been subtly failing because of one character in a
 directory name simply started working.
 

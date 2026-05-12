@@ -56,7 +56,7 @@ If no output → the patch was overwritten by an openclaw update. Re-apply it:
 - Start a fresh session and retest
 
 A backup of the patched file is at:
-`C:\Users\ajsup\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts`
+`C:\Users\YourUsername\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts`
 
 > **Why this happens:** The memory-core plugin uses `emptyPluginConfigSchema()` — meaning `ctx.config` inside the tool factory is intentionally empty. `api.config` is the full gateway config. See LESSONS_LEARNED.md [2026-03-19] for the full writeup.
 
@@ -183,7 +183,7 @@ Select-String -Path "$env:APPDATA\npm\node_modules\openclaw\extensions\memory-co
 # No output = patch is gone
 
 # Restore from snapshot
-Copy-Item "C:\Users\ajsup\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts" `
+Copy-Item "C:\Users\YourUsername\.openclaw\EMERGENCY_SNAPSHOT\extensions\memory-core-index.ts" `
   "$env:APPDATA\npm\node_modules\openclaw\extensions\memory-core\index.ts" -Force
 
 # Restart gateway

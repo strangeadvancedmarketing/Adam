@@ -9,7 +9,7 @@ Usage:
     from adam.swarm import Swarm
 
     swarm = Swarm(vault_path="/path/to/vault")
-    swarm.create_task("research", {"target": "Doctor Paver Corp", "source": "reddit"})
+    swarm.create_task("research", {"target": "Acme Landscaping", "source": "reddit"})
 
     # In an agent process:
     task = swarm.claim_next("research", agent_id="pattern_seeker")

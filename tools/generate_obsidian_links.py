@@ -31,8 +31,11 @@ from datetime import datetime
 from collections import defaultdict
 
 # ── defaults ──────────────────────────────────────────────────────────────────
-DEFAULT_DB    = r"C:\Users\ajsup\.neuralmemory\brains\default.db"
-DEFAULT_VAULT = r"C:\AdamsVault"
+DEFAULT_DB    = os.environ.get(
+    "NMEM_DB_PATH",
+    os.path.join(Path.home(), ".neuralmemory", "brains", "default.db")
+)
+DEFAULT_VAULT = os.environ.get("ADAM_VAULT_PATH", os.path.join(Path.home(), "AdamsVault"))
 GRAPH_FOLDER  = "adam-graph"
 MIN_WEIGHT_DEFAULT  = 0.4
 MAX_LINKS_PER_NODE  = 30

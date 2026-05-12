@@ -1,5 +1,5 @@
 name: adam-framework
-version: 1.0.0
+version: 1.1.0
 description: "MCP server giving Claude Desktop and any MCP client persistent memory from a local vault. Works with Obsidian vaults or any markdown folder. Solves AI amnesia."
 transport: stdio
 build:
