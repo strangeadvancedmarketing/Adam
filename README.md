@@ -142,7 +142,7 @@ The machine crashes. The vendor goes down. You switch models. You come back. The
 |  LAYER 3: NEURAL GRAPH                                   |
 |  Associative recall, not keyword search.                 |
 |  Concepts link to concepts. Context propagates.          |
-|  38,626 neurons / 91,037 synapses and growing.           |
+|  39,857 neurons / 93,835 synapses and growing.           |
 +----------------------------------------------------------+
 |  LAYER 4: NIGHTLY RECONCILIATION                         |
 |  Gemini merges daily logs into CORE_MEMORY.md.           |
