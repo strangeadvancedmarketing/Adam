@@ -248,7 +248,7 @@ adam-framework/
 │   ├── coherence_baseline.template.json  <- Layer 5 baseline tracking schema
 │   ├── coherence_log.template.json       <- Layer 5 event log schema
 │   └── active-context.template.md <- Active task tracking
-├── adam/                          <- Python package (pip install adam-framework)
+├── adam/                          <- Python package (pip install git+https://github.com/strangeadvancedmarketing/Adam.git)
 │   ├── __init__.py                <- Package version
 │   ├── cli.py                     <- CLI tool: adam init, start, stop, status, reconcile
 │   ├── providers.py               <- LLM provider abstraction (Gemini/OpenAI/Anthropic/Ollama)
@@ -262,7 +262,7 @@ adam-framework/
 │   ├── coherence_monitor.py       <- Layer 5: scratchpad dropout detector + re-anchor
 │   └── test_coherence_monitor.py  <- 33-test suite, validated against live session data
 ├── tests/                         <- 27 unit tests for providers, SWARM, and events
-├── pyproject.toml                 <- Python packaging (pip install adam-framework)
+├── pyproject.toml                 <- Python packaging (pip install git+https://github.com/strangeadvancedmarketing/Adam.git)
 ├── docs/
 │   ├── ARCHITECTURE.md            <- Deep dive on all 5 layers
 │   ├── CONFIG_REFERENCE.md        <- Every config field explained
@@ -283,7 +283,7 @@ adam-framework/
 ## Quick Start (pip install)
 
 ```bash
-pip install adam-framework
+pip install git+https://github.com/strangeadvancedmarketing/Adam.git
 
 # Initialize a new vault
 adam init --path ~/MyVault
@@ -387,7 +387,7 @@ adam webhook start --port 9876
 ### Path 1 — CLI (fastest, 5 min)
 
 ```bash
-pip install adam-framework
+pip install git+https://github.com/strangeadvancedmarketing/Adam.git
 adam init --path ~/MyVault
 adam start
 ```
@@ -516,7 +516,6 @@ cd adam-skills
 
 | Repo | What |
 |------|------|
-| [Kronos Trading](https://github.com/strangeadvancedmarketing/kronos-trading) | AI-powered crypto trading system — 4-model ensemble prediction + autonomous execution. Built with the same voice-to-execution method as Adam. |
 | [adam-skills](https://github.com/strangeadvancedmarketing/adam-skills) | Skill library for Adam — weather, news, email intelligence, contractor prospecting, and more. |
 
 ---
